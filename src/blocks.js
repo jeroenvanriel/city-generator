@@ -1,4 +1,5 @@
 import * as three from 'three';
+import { getRandomInt } from './utils';
 
 export default function blocks(scene) {
     const material = new three.MeshStandardMaterial( {color: 0xff000f} );
@@ -15,9 +16,4 @@ export default function blocks(scene) {
         scene.add( cube );
     }
 
-}
-
-/** Returns a random integer between min and max. */
-function getRandomInt (min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
