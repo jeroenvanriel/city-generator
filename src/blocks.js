@@ -1,7 +1,7 @@
 import * as three from 'three';
 
 export default function blocks(scene) {
-    const material = new three.MeshBasicMaterial( {color: 0xff000f} );
+    const material = new three.MeshStandardMaterial( {color: 0xff000f} );
     const geometry = new three.BoxGeometry( 10, 10, 12 );
 
     geometry.computeBoundingBox();
