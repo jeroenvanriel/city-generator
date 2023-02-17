@@ -5,6 +5,8 @@ import './style.css';
 import model from './model.glb';
 
 import blocks from './blocks';
+import building from './merge';
+import { getRandomInt } from './utils';
 
 const renderer = new three.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -33,8 +35,15 @@ scene.add(light);
 const directionalLight = new three.DirectionalLight(0xffffff, 0.5);
 scene.add(directionalLight);
 
-
+// add some blocks
 blocks(scene)
+
+// add 10 random buildings
+for (let i = 0; i < 10; i++ ) {
+  const b = building();
+  b.position.add(new three.Vector3(getRandomInt(0, 200), 0, getRandomInt(0, 200)))
+  scene.add(b)
+}
 
 
 function animate() {
