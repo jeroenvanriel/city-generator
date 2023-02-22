@@ -28,6 +28,14 @@ module.exports = {
         test: /\.glb$/i,
         type: 'asset/resource',
       },
+      {
+        test: /\.png$/i,
+        type: 'asset/resource',
+      },
+      {
+        test:  /\.xml$/i,
+        use: [ 'xml-loader' ],
+      }
     ],
   },
 };
