@@ -13,6 +13,15 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputEncoding = three.sRGBEncoding;
 document.body.appendChild(renderer.domElement);
 
+window.addEventListener('resize', onWindowResize, false);
+
+function onWindowResize(){
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+}
+
 const camera = new three.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 const controls = new OrbitControls(camera, renderer.domElement);
 camera.position.set(150, 50, 150);
