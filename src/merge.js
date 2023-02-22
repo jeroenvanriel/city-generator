@@ -27,8 +27,12 @@ export default function building(params) {
         const height = randomUniform(h_mid - params.height_eps, h_mid + params.height_eps);
         const extrudeSettings = {
             depth: height,
-            bevelEnabled: false,
-            // TODO: bevel might actually be desirable
+            bevelEnabled: true,
+            steps: 1,
+            bevelThickness: 1,
+            bevelSize: 1,
+            bevelOffset: 0,
+            bevelSegments: 1
         };
 
         const geometry = new three.ExtrudeGeometry( shape, extrudeSettings );
