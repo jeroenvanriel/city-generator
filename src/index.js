@@ -3,7 +3,6 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MapControls, OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls';
 import './style.css';
-import model from './model.glb';
 
 import blocks from './blocks';
 import building from './merge';
@@ -48,13 +47,6 @@ controls_move.target.set(100, 0, 100);
 controls_move.update()
 
 const scene = new three.Scene();
-
-const loader = new GLTFLoader();
-loader.load(model, function(gltf) {
-  scene.add(gltf.scene);
-}, undefined, function(error) {
-  console.error(error);
-});
 
 const light = new three.AmbientLight(0x404040);
 scene.add(light);
