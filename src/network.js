@@ -5,7 +5,7 @@ import * as clipperLib from 'js-angusj-clipper/web';
 import * as _ from 'lodash';
 
 import network from './networks/test.net.xml';
-var net = network.net;
+const net = network.net;
 
 // determine the size of the SVG canvas from the 'convBoundary' attribute
 // that is found in the <location> tag
@@ -131,7 +131,6 @@ export default async function loadNetwork() {
   // find intersection of lanes, we assume that lanes are ordered
   let lane_seams = [];
   _.map(edge_lane_polys, edge => {
-    let lines = [];
     for (let i = 0; i < edge.lanes.length - 1; ++i) {
       const line = intersection(edge.lanes[i], edge.lanes[i+1])[0];
       lane_seams.push(cleanLine(line));
@@ -171,11 +170,19 @@ export default async function loadNetwork() {
     return toClipper(points);
   });
 
-  const junctions_inflated = _.map(junction_polys, p => offsetPolygon(p, 20));
-  const merged_road = union([...edge_polys, ...junctions_inflated]);
+  const merged_edges = union(_.map(edge_polys, p => offsetPolygon(p, 40)));
+  const merged_junctions = union(_.map(junction_polys, p => offsetPolygon(p, 40)))
+  const merged_road = union([merged_edges, merged_junctions]);
+
+  // TODO: Note that this method is not capable of correctly displaying the 'holes' of the polygon.
+  // Instead, it now just draws the holes as filled polygons.
+  function drawPolys(polys, color='black', fill='red') {
+    _.map(polys, p => drawPolygon(fromClipper(p), { color, fill }))
+  }
+
+  drawPolys(merged_road)
 
   const lines_side = _.compact(_.map(merged_road, p => offsetPolygon(p, -LINE_OFFSET * SCALE)));
-  console.log(lines_side)
   const lines_between = [...edge_seams, ...lane_seams];
 
   function extrudeLine(lines, endType) {
@@ -197,17 +204,6 @@ export default async function loadNetwork() {
     ...extrudeLine(lines_between, clipperLib.EndType.OpenButt),
   ]
 
-  // TODO: debug drawing
-  function drawPolys(polys, color='black') {
-    _.map(polys, p => drawPolygon(fromClipper(p), { color: color, fill: 'red' }))
-  }
-//   _.map(edge_lane_polys, edge => drawPolys(edge.lanes)); // lanes
-//   drawPolys(edge_polys, 'blue'); // edges
-//   drawPolys(lane_seams, 'yellow')
-//   drawPolys(edge_seams, 'red')
-  drawPolys(merged_road)
-  drawPolys(junction_polys)
-
   function polygonToMesh(polygon, material) {
     let outer = [];
     let holes = [];
@@ -224,7 +220,6 @@ export default async function loadNetwork() {
         holes.push(path);
       });
     } else {
-        console.log('hoi')
       outer = _.map(fromClipper(polygon), (point) => new three.Vector2( point[0], point[1] ));
     }
 
@@ -258,7 +253,7 @@ export default async function loadNetwork() {
     return mesh;
   }
 
-  function drawPolygons3D(polygons, line_polys) {
+  function drawPolygons3D(roadPolygon, line_polys) {
     const renderer = new three.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.outputEncoding = three.sRGBEncoding;
@@ -277,17 +272,10 @@ export default async function loadNetwork() {
     const directionalLight = new three.DirectionalLight(0xffffff, 0.5);
     scene.add(directionalLight);
 
-    const loader = new three.TextureLoader();
-
-    // const texture = loader.load('asphalt.png');
-    // texture.wrapS = three.RepeatWrapping;
-    // texture.wrapT = three.RepeatWrapping;
-    // texture.repeat.set(0.1, 0.1);
-    // const roadMaterial = new three.MeshBasicMaterial({ map: texture });
     const roadMaterial = new three.MeshBasicMaterial({ color: 'red' });
     const lineMaterial = new three.MeshBasicMaterial({ color: 'white' });
 
-    _.map(polygons, p => scene.add(polygonToMesh(p, roadMaterial)));
+    scene.add(polygonToMesh(roadPolygon, roadMaterial));
     _.map(line_polys, p => {
       const mesh = polygonToMesh(p, lineMaterial);
       mesh.translateZ(-0.01);
