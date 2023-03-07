@@ -1,9 +1,10 @@
 import * as three from 'three';
 import { Mesh } from 'three';
+import { getRandomInt } from './utils';
 
 export default function blocks(scene) {
-    const material = new three.MeshBasicMaterial( {color: 0xff000f} );
-    const pyramidMaterial = new three.MeshBasicMaterial( {color: 0x00ff0f} )
+    const material = new three.MeshStandardMaterial( {color: 0xff000f} );
+    const pyramidMaterial = new three.MeshStandardMaterial( {color: 0x00ff0f} )
     const geometryWidth = 10;
     const geometryHeight = 10;
     const geometryDepth = 10;
@@ -40,9 +41,4 @@ export default function blocks(scene) {
         scene.add( cube[i] );
     }
 
-}
-
-/** Returns a random integer between min and max. */
-function getRandomInt (min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
