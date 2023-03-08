@@ -193,11 +193,7 @@ export async function loadNetwork(net) {
   ]
 }
 
-export async function offsetPolygon(polygon, delta=2) {
-  const clipper = await clipperLib.loadNativeClipperLibInstanceAsync(
-    clipperLib.NativeClipperLibRequestedFormat.WasmWithAsmJsFallback
-  );
-
+export function offsetPolygon(clipper, polygon, delta=2) {
   return fromClipper(clipper.offsetToPolyTree({
     delta: delta * SCALE,
     offsetInputs: [{

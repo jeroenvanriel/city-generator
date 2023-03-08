@@ -9,6 +9,17 @@ import blocks from './blocks';
 import building from './merge';
 import { getRandomInt, polygonToMesh } from './utils';
 
+import * as clipperLib from 'js-angusj-clipper/web';
+
+import network from './networks/grid.net.xml';
+import block1 from './models/block1.glb';
+
+async function mainAsync() {
+
+const clipper = await clipperLib.loadNativeClipperLibInstanceAsync(
+  clipperLib.NativeClipperLibRequestedFormat.WasmWithAsmJsFallback
+);
+
 const renderer = new three.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputEncoding = three.sRGBEncoding;
@@ -56,8 +67,6 @@ const directionalLight = new three.DirectionalLight(0xffffff, 0.5);
 scene.add(directionalLight);
 
 
-import network from './networks/grid.net.xml';
-
 loadNetwork(network.net).then(r => {
   const [ road_polygon, side_line_polygons, between_line_polygons ] = r;
 
@@ -71,39 +80,67 @@ loadNetwork(network.net).then(r => {
   // TODO: make these dashed
   between_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
 
-  placeBuildings(road_polygon)
+  const loader = new GLTFLoader();
+  loader.load(block1, function(gltf) {
+    const block1 = gltf.scene;
+    const s = 5;
+    block1.scale.set(s, s, s);
+    placeBuildings(road_polygon, block1)
+  }, undefined, function(error) {
+    console.error(error);
+  });
 })
 
-function placeBuildings(road_polygon) {
+function placeBuildings(road_polygon, block) {
   const holes = road_polygon.slice(1);
-  const hole = holes[1];
 
-  _.forEach(holes, hole => {
-    // build on the first hole
-    offsetPolygon(hole, -10).then(r => {
+  // TODO: use GPU instancing
+  // We need some extra loading code, because the imported model is a three.Group()
+  // so we need an three.InstancedMesh for each three.Mesh() in the group (which might
+  // need to be found recursively).
+  // const building_count = holes.length * 15;
+  // const instancedMesh = new three.InstancedMesh(block.geometry, block.material, building_count);
+  // const dummyObject = new three.Object3D();
 
-      // close the polygon
-      r.push(r[0])
+  let points = [];
+  for (let i = 0; i < holes.length; i++) {
+    points.push(...getPositionsAlongPolygon(holes[i]));
+    points.push(...getPositionsAlongPolygon(holes[i], 25, 10));
+    points.push(...getPositionsAlongPolygon(holes[i], 35, 5));
+  }
 
-      const shape = new three.Shape(r.map(p => new three.Vector2(p[0], p[1])));
+  const bb = new three.Box3();
+  bb.setFromObject(block);
+  const model_height = bb.max.y - bb.min.y;
 
-      const box_material = new three.MeshStandardMaterial( { color: 0xffffff } );
-      const box_geometry = new three.BoxGeometry( 10, 10, 10 );
+  _.forEach(points, point => {
+    const levels = getRandomInt(1, 6);
+    for (let l = 0; l < levels; l++) {
+      const cube = block.clone();
+      cube.position.add(new three.Vector3(point.x, l * model_height, point.y));
+      cube.position.add(new three.Vector3(0, model_height / 2, 0));
+      scene.add(cube);
+    }
 
-      const points = shape.getSpacedPoints(15);
-      points.map(p => {
-        const cube = new three.Mesh( box_geometry, box_material );
-        cube.position.add(new three.Vector3(p.x, 0, p.y));
-        cube.position.add(new three.Vector3(0, 5, 0));
-        scene.add(cube);
-      })
-
-      const shape_geo = new three.ShapeGeometry(shape);
-      const mesh = new three.Mesh(shape_geo, material);
-      mesh.rotation.set(Math.PI / 2, 0, 0);
-      scene.add(mesh)
-    })
+    // TODO: use GPU instancing
+    // dummyObject.position.x = p.x;
+    // dummyObject.position.z = p.y;
+    // dummyObject.scale.set(10, 10, 10);
+    // instancedMesh.setMatrixAt(i + j, dummyObject.matrix);
   })
+
+  // TODO: use GPU instancing
+  // scene.add(instancedMesh);
+}
+
+function getPositionsAlongPolygon(polygon, offset=10, count=15) { 
+  let r = offsetPolygon(clipper, polygon, -offset);
+
+  // close the polygon
+  r.push(r[0]);
+
+  const shape = new three.Shape(r.map(p => new three.Vector2(p[0], p[1])));
+  return shape.getSpacedPoints(count);
 }
 
 // add some blocks
@@ -131,3 +168,7 @@ function animate() {
   renderer.render(scene, camera);
 }
 animate();
+
+}
+
+mainAsync();
