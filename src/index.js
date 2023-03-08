@@ -4,7 +4,7 @@ import { MapControls, OrbitControls } from 'three/examples/jsm/controls/OrbitCon
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls';
 import './style.css';
 
-import loadNetwork from './network.js';
+import { loadNetwork, offsetPolygon } from './network.js';
 import blocks from './blocks';
 import building from './merge';
 import { getRandomInt, polygonToMesh } from './utils';
@@ -43,8 +43,8 @@ controls_zoom.dynamicDampingFactor = 0.05; // set dampening factor
 controls_zoom.minDistance = 10;
 controls_zoom.maxDistance = 1000;
 
-camera.position.set(0, 100, 0)
-controls_move.target.set(100, 0, 100);
+camera.position.set(-50, 200, -50)
+controls_move.target.set(150, 0, -100);
 controls_move.update()
 
 const scene = new three.Scene();
@@ -70,7 +70,41 @@ loadNetwork(network.net).then(r => {
   side_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
   // TODO: make these dashed
   between_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
+
+  placeBuildings(road_polygon)
 })
+
+function placeBuildings(road_polygon) {
+  const holes = road_polygon.slice(1);
+  const hole = holes[1];
+
+  _.forEach(holes, hole => {
+    // build on the first hole
+    offsetPolygon(hole, -10).then(r => {
+
+      // close the polygon
+      r.push(r[0])
+
+      const shape = new three.Shape(r.map(p => new three.Vector2(p[0], p[1])));
+
+      const box_material = new three.MeshStandardMaterial( { color: 0xffffff } );
+      const box_geometry = new three.BoxGeometry( 10, 10, 10 );
+
+      const points = shape.getSpacedPoints(15);
+      points.map(p => {
+        const cube = new three.Mesh( box_geometry, box_material );
+        cube.position.add(new three.Vector3(p.x, 0, p.y));
+        cube.position.add(new three.Vector3(0, 5, 0));
+        scene.add(cube);
+      })
+
+      const shape_geo = new three.ShapeGeometry(shape);
+      const mesh = new three.Mesh(shape_geo, material);
+      mesh.rotation.set(Math.PI / 2, 0, 0);
+      scene.add(mesh)
+    })
+  })
+}
 
 // add some blocks
 blocks(scene)

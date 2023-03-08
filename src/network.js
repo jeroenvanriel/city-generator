@@ -13,10 +13,17 @@ const EXTRUDE_SCALE = 1.65;
 const LINE_OFFSET = 0.08;
 const LINE_WIDTH = 0.08;
 
-function toClipper(points) {
+function fromSUMO(points) {
   return _.map(points, (point) => ({
     x: Math.round(SCALE * point[0]),
     y: - Math.round(SCALE * point[1]), // SUMO format has flipped y-coordinates
+  }));
+}
+
+function toClipper(points) {
+  return _.map(points, (point) => ({
+    x: Math.round(SCALE * point[0]),
+    y: Math.round(SCALE * point[1]),
   }));
 }
 
@@ -27,7 +34,7 @@ function fromClipper(points) {
   ]);
 }
 
-export default async function loadNetwork(net) {
+export async function loadNetwork(net) {
 
   const clipper = await clipperLib.loadNativeClipperLibInstanceAsync(
     clipperLib.NativeClipperLibRequestedFormat.WasmWithAsmJsFallback
@@ -87,7 +94,7 @@ export default async function loadNetwork(net) {
       from: edge.$.from,
       lanes: _.map(lanes, (lane, id) => {
         const points = parseShape(lane.$.shape);
-        return extrudePolyline(toClipper(points), EXTRUDE_SCALE * SCALE);
+        return extrudePolyline(fromSUMO(points), EXTRUDE_SCALE * SCALE);
       })
     };
   });
@@ -140,7 +147,7 @@ export default async function loadNetwork(net) {
   const junctions = _.filter(net.junction, junction => ['traffic_light', 'priority'].includes(junction.$.type));
   const junction_polys = _.map(junctions, junction => {
     const points = parseShape(junction.$.shape);
-    return toClipper(points);
+    return fromSUMO(points);
   });
 
   const merged_edges = union(_.map(edge_polys, p => offsetPolygon(p, 40)));
@@ -184,4 +191,19 @@ export default async function loadNetwork(net) {
       line_mesh.map(polygon => fromClipper(polygon))
     )
   ]
+}
+
+export async function offsetPolygon(polygon, delta=2) {
+  const clipper = await clipperLib.loadNativeClipperLibInstanceAsync(
+    clipperLib.NativeClipperLibRequestedFormat.WasmWithAsmJsFallback
+  );
+
+  return fromClipper(clipper.offsetToPolyTree({
+    delta: delta * SCALE,
+    offsetInputs: [{
+      data: toClipper(polygon),
+      joinType: clipperLib.JoinType.Round,
+      endType: clipperLib.EndType.ClosedPolygon,
+    }],
+  })?.getFirst()?.contour);
 }
