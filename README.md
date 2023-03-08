@@ -1,5 +1,7 @@
 # City Generator
 
+![current screenshot](screenshot.png)
+
 ## Network loading
 We load the network from a SUMO network file, which lists road edges and their lanes.
 Each lane and junction is encoded as a polygons (lists of coordinates).
