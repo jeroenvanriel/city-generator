@@ -28,3 +28,4 @@ These building blocks have been modelled in Blender.
 - [ ] road textures
 - [ ] dashed lines between lanes (maybe using three.Curve.getSpacedPoints())
 - [ ] skybox
+- [ ] anti-aliasing
