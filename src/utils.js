@@ -29,11 +29,9 @@ export function gaussianRandom(start, end) {
 export function polygonToMesh(polygon, material) {
   let outer = [];
   let holes = [];
-  console.log(polygon)
 
   // first one is the outer boundary
   outer = _.map(polygon[0], (point) => new three.Vector2( point[0], point[1] ));
-  console.log(outer)
 
   // the rest of the polygons define the holes
   _.forEach(polygon.slice(1), p => {
