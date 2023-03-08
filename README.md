@@ -1,6 +1,6 @@
 # City Generator
 
-![current screenshot](screenshot.png)
+![current screenshot](screenshot2.png)
 
 ## Network loading
 We load the network from a SUMO network file, which lists road edges and their lanes.
