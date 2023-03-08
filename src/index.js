@@ -4,9 +4,10 @@ import { MapControls, OrbitControls } from 'three/examples/jsm/controls/OrbitCon
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls';
 import './style.css';
 
+import loadNetwork from './network.js';
 import blocks from './blocks';
 import building from './merge';
-import { getRandomInt } from './utils';
+import { getRandomInt, polygonToMesh } from './utils';
 
 const renderer = new three.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -53,6 +54,23 @@ scene.add(light);
 
 const directionalLight = new three.DirectionalLight(0xffffff, 0.5);
 scene.add(directionalLight);
+
+
+import network from './networks/grid.net.xml';
+
+loadNetwork(network.net).then(r => {
+  const [ road_polygon, side_line_polygons, between_line_polygons ] = r;
+
+  const road_material = new three.MeshStandardMaterial( { color: 0x111111 } );
+  const road_mesh = polygonToMesh(road_polygon, road_material);
+  road_mesh.translateZ(0.02); // to prevent "intersection" with lines
+  scene.add(road_mesh);
+
+  const line_material = new three.MeshStandardMaterial( { color: 0xffffff } );
+  side_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
+  // TODO: make these dashed
+  between_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
+})
 
 // add some blocks
 blocks(scene)

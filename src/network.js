@@ -1,17 +1,7 @@
-import * as three from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { SVG } from '@svgdotjs/svg.js';
 import * as clipperLib from 'js-angusj-clipper/web';
 import * as _ from 'lodash';
 
-import network from './networks/test.net.xml';
-const net = network.net;
-
-// determine the size of the SVG canvas from the 'convBoundary' attribute
-// that is found in the <location> tag
-const sizes = _.map(net.location[0].$.convBoundary.split(','))
-var draw = SVG().addTo('body').size(10 * (sizes[2] - sizes[0]), 10 * (sizes[3] - sizes[1]))
-
+// read the polygon points from the SUMO format
 function parseShape(shape) {
   return shape.split(' ').map(coord => coord.split(',').map(Number));
 }
@@ -37,24 +27,7 @@ function fromClipper(points) {
   ]);
 }
 
-function drawPolygon(points, params) {
-  const defaults = { closed: true, color: 'black', fill: 'none', markers: false };
-  params = Object.assign(defaults, params);
-
-  const func = params.closed ? 'polygon' : 'polyline';
-  const line = draw[func](points)
-    .translate(750, 750)
-    .scale(6, 0, 0)
-    .fill(params.fill)
-    .stroke({ width: 0.2, color: params.color });
-
-  const marker = draw.marker(5, 5, function(add) {
-    add.circle(5, 5).fill({ color: params.color }).stroke({ color: params.color });
-  });
-  if (params.markers) ['start', 'mid', 'end'].map(t => line.marker(t, marker))
-}
-
-export default async function loadNetwork() {
+export default async function loadNetwork(net) {
 
   const clipper = await clipperLib.loadNativeClipperLibInstanceAsync(
     clipperLib.NativeClipperLibRequestedFormat.WasmWithAsmJsFallback
@@ -174,14 +147,6 @@ export default async function loadNetwork() {
   const merged_junctions = union(_.map(junction_polys, p => offsetPolygon(p, 40)))
   const merged_road = union([merged_edges, merged_junctions]);
 
-  // TODO: Note that this method is not capable of correctly displaying the 'holes' of the polygon.
-  // Instead, it now just draws the holes as filled polygons.
-  function drawPolys(polys, color='black', fill='red') {
-    _.map(polys, p => drawPolygon(fromClipper(p), { color, fill }))
-  }
-
-  drawPolys(merged_road)
-
   const lines_side = _.compact(_.map(merged_road, p => offsetPolygon(p, -LINE_OFFSET * SCALE)));
   const lines_between = [...edge_seams, ...lane_seams];
 
@@ -198,97 +163,25 @@ export default async function loadNetwork() {
     );
   }
 
-  // extrude lines
-  const line_polys = [
-    ...extrudeLine(lines_side, clipperLib.EndType.ClosedLine),
-    ...extrudeLine(lines_between, clipperLib.EndType.OpenButt),
+  // extrude these lines to polygons
+  const lines_side_polys = extrudeLine(lines_side, clipperLib.EndType.ClosedLine);
+  const lines_between_polys = extrudeLine(lines_between, clipperLib.EndType.OpenButt);
+
+  // convert coordinates back from Clipper integers
+  // merged_road is a single polygon
+  // lines_{side,between}_polys is a list of polygons
+  // where each polygon is a list of paths,
+  // and each path a list of points,
+  // each point an array of length 2 containing [x,y]
+  return [
+    merged_road.map(polygon => fromClipper(polygon)),
+
+    lines_side_polys.map(line_mesh => 
+      line_mesh.map(polygon => fromClipper(polygon))
+    ),
+
+    lines_between_polys.map(line_mesh =>
+      line_mesh.map(polygon => fromClipper(polygon))
+    )
   ]
-
-  function polygonToMesh(polygon, material) {
-    let outer = [];
-    let holes = [];
-
-    // check if this is a polygon with holes (then the polygons after the first define holes)
-    if (_.has(polygon[0][0], 'x')) {
-      // first one is the outer boundary
-      outer = _.map(fromClipper(polygon[0]), (point) => new three.Vector2( point[0], point[1] ));
-
-      // the rest of the polygons define the holes
-      _.forEach(polygon.slice(1), p => {
-        const points = _.map(fromClipper(p), (point) => new three.Vector2( point[0], point[1] ));
-        const path = new three.Path(points);
-        holes.push(path);
-      });
-    } else {
-      outer = _.map(fromClipper(polygon), (point) => new three.Vector2( point[0], point[1] ));
-    }
-
-    const shape = new three.Shape(outer);
-    shape.holes = holes;
-    
-    const geometry = new three.ShapeGeometry( shape );
-    material.side = three.DoubleSide;
-    const mesh = new three.Mesh( geometry, material );
-    mesh.rotation.set(Math.PI / 2, 0, 0);
-    return mesh;
-  }
-
-  function lineToMesh(line) {
-    const points = _.map(fromClipper(line), (point) => new three.Vector2( point[0], point[1] ));
-    points.push(points[0]); // close the shape
-
-    // TODO: enable spaced line parts, maybe using `getSpacedPoints()`
-    // const shape = new three.Shape(points);
-    // shape.autoClose = true;
-    // const points = shape.getPoints();
-    // const spacedPoints = shape.getSpacedPoints( 50 );
-
-    const geometryPoints = new three.BufferGeometry().setFromPoints( points );
-    // const geometrySpacedPoints = new three.BufferGeometry().setFromPoints( spacedPoints );
-
-    const material = new three.LineBasicMaterial({ color: new three.Color(0, 0, 1) });
-    const mesh = new three.Line(geometryPoints, material);
-    mesh.position.set(0, 0.05, 0);
-    mesh.rotation.set(Math.PI / 2, 0, 0);
-    return mesh;
-  }
-
-  function drawPolygons3D(roadPolygon, line_polys) {
-    const renderer = new three.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.outputEncoding = three.sRGBEncoding;
-    document.body.appendChild(renderer.domElement);
-
-    const camera = new three.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
-    const controls = new OrbitControls(camera, renderer.domElement);
-    camera.position.set(500, 200, 500);
-    controls.target.set(500, 0, 500);
-    controls.update()
-
-    const scene = new three.Scene();
-    const light = new three.AmbientLight(0x404040);
-    scene.add(light);
-
-    const directionalLight = new three.DirectionalLight(0xffffff, 0.5);
-    scene.add(directionalLight);
-
-    const roadMaterial = new three.MeshBasicMaterial({ color: 'red' });
-    const lineMaterial = new three.MeshBasicMaterial({ color: 'white' });
-
-    scene.add(polygonToMesh(roadPolygon, roadMaterial));
-    _.map(line_polys, p => {
-      const mesh = polygonToMesh(p, lineMaterial);
-      mesh.translateZ(-0.01);
-      scene.add(mesh);
-    });
-
-    function animate() {
-      requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
-    }
-    animate();
-  }
-
-  drawPolygons3D(merged_road, line_polys);
 }
