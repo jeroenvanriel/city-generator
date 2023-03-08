@@ -21,8 +21,8 @@ These building blocks have been modelled in Blender.
 
 ## Miscellaneous
 
-[x] fix network loading
-[x] export polygon and holes
-[ ] road textures
-[ ] dashed lines between lanes (maybe using three.Curve.getSpacedPoints())
-[ ] skybox
+- [x] fix network loading
+- [x] export polygon and holes
+- [ ] road textures
+- [ ] dashed lines between lanes (maybe using three.Curve.getSpacedPoints())
+- [ ] skybox
