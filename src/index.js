@@ -13,6 +13,7 @@ import * as clipperLib from 'js-angusj-clipper/web';
 
 import network from './networks/grid.net.xml';
 import block1 from './models/block1.glb';
+import asphaltTexture from './asphalt.png';
 
 async function mainAsync() {
 
@@ -66,11 +67,19 @@ scene.add(light);
 const directionalLight = new three.DirectionalLight(0xffffff, 0.5);
 scene.add(directionalLight);
 
+const textureLoader = new three.TextureLoader();
 
 loadNetwork(network.net).then(r => {
   const [ road_polygon, side_line_polygons, between_line_polygons ] = r;
 
-  const road_material = new three.MeshStandardMaterial( { color: 0x111111 } );
+  const texture = textureLoader.load(asphaltTexture)
+  texture.wrapS = three.RepeatWrapping;
+  texture.wrapT = three.RepeatWrapping;
+  texture.repeat.set(0.05, 0.05);
+  const road_material = new three.MeshBasicMaterial({
+    map: texture,
+  });
+  
   const road_mesh = polygonToMesh(road_polygon, road_material);
   road_mesh.translateZ(0.02); // to prevent "intersection" with lines
   scene.add(road_mesh);
