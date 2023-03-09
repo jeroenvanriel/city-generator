@@ -6,6 +6,7 @@ import './style.css';
 
 import blocks from './blocks';
 import building from './merge';
+import grid from './grid'
 import { getRandomInt } from './utils';
 
 const renderer = new three.WebGLRenderer();
@@ -64,6 +65,8 @@ for (let i = 0; i < 10; i++ ) {
   scene.add(b)
 }
 
+// add grid
+grid(scene)
 
 function animate() {
   requestAnimationFrame(animate);
