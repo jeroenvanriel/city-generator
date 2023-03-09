@@ -25,7 +25,7 @@ These building blocks have been modelled in Blender.
 
 - [x] fix network loading
 - [x] export polygon and holes
-- [ ] road textures
+- [x] road textures
 - [ ] dashed lines between lanes (maybe using three.Curve.getSpacedPoints())
 - [ ] skybox
 - [ ] anti-aliasing
