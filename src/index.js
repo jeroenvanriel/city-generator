@@ -4,10 +4,23 @@ import { MapControls, OrbitControls } from 'three/examples/jsm/controls/OrbitCon
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls';
 import './style.css';
 
+import { loadNetwork, offsetPolygon } from './network.js';
 import blocks from './blocks';
 import building from './merge';
 import grid from './grid'
-import { getRandomInt } from './utils';
+import { getRandomInt, polygonToMesh } from './utils';
+
+import * as clipperLib from 'js-angusj-clipper/web';
+
+import network from './networks/grid.net.xml';
+import block1 from './models/block1.glb';
+import asphaltTexture from './asphalt.png';
+
+async function mainAsync() {
+
+const clipper = await clipperLib.loadNativeClipperLibInstanceAsync(
+  clipperLib.NativeClipperLibRequestedFormat.WasmWithAsmJsFallback
+);
 
 const renderer = new three.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -43,8 +56,8 @@ controls_zoom.dynamicDampingFactor = 0.05; // set dampening factor
 controls_zoom.minDistance = 10;
 controls_zoom.maxDistance = 1000;
 
-camera.position.set(0, 100, 0)
-controls_move.target.set(100, 0, 100);
+camera.position.set(-50, 200, -50)
+controls_move.target.set(150, 0, -100);
 controls_move.update()
 
 const scene = new three.Scene();
@@ -54,6 +67,91 @@ scene.add(light);
 
 const directionalLight = new three.DirectionalLight(0xffffff, 0.5);
 scene.add(directionalLight);
+
+const textureLoader = new three.TextureLoader();
+
+loadNetwork(network.net).then(r => {
+  const [ road_polygon, side_line_polygons, between_line_polygons ] = r;
+
+  const texture = textureLoader.load(asphaltTexture)
+  texture.wrapS = three.RepeatWrapping;
+  texture.wrapT = three.RepeatWrapping;
+  texture.repeat.set(0.05, 0.05);
+  const road_material = new three.MeshBasicMaterial({
+    map: texture,
+  });
+  
+  const road_mesh = polygonToMesh(road_polygon, road_material);
+  road_mesh.translateZ(0.02); // to prevent "intersection" with lines
+  scene.add(road_mesh);
+
+  const line_material = new three.MeshStandardMaterial( { color: 0xffffff } );
+  side_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
+  // TODO: make these dashed
+  between_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
+
+  const loader = new GLTFLoader();
+  loader.load(block1, function(gltf) {
+    const block1 = gltf.scene;
+    const s = 5;
+    block1.scale.set(s, s, s);
+    placeBuildings(road_polygon, block1)
+  }, undefined, function(error) {
+    console.error(error);
+  });
+})
+
+function placeBuildings(road_polygon, block) {
+  const holes = road_polygon.slice(1);
+
+  // TODO: use GPU instancing
+  // We need some extra loading code, because the imported model is a three.Group()
+  // so we need an three.InstancedMesh for each three.Mesh() in the group (which might
+  // need to be found recursively).
+  // const building_count = holes.length * 15;
+  // const instancedMesh = new three.InstancedMesh(block.geometry, block.material, building_count);
+  // const dummyObject = new three.Object3D();
+
+  let points = [];
+  for (let i = 0; i < holes.length; i++) {
+    points.push(...getPositionsAlongPolygon(holes[i]));
+    points.push(...getPositionsAlongPolygon(holes[i], 25, 10));
+    points.push(...getPositionsAlongPolygon(holes[i], 35, 5));
+  }
+
+  const bb = new three.Box3();
+  bb.setFromObject(block);
+  const model_height = bb.max.y - bb.min.y;
+
+  _.forEach(points, point => {
+    const levels = getRandomInt(1, 6);
+    for (let l = 0; l < levels; l++) {
+      const cube = block.clone();
+      cube.position.add(new three.Vector3(point.x, l * model_height, point.y));
+      cube.position.add(new three.Vector3(0, model_height / 2, 0));
+      scene.add(cube);
+    }
+
+    // TODO: use GPU instancing
+    // dummyObject.position.x = p.x;
+    // dummyObject.position.z = p.y;
+    // dummyObject.scale.set(10, 10, 10);
+    // instancedMesh.setMatrixAt(i + j, dummyObject.matrix);
+  })
+
+  // TODO: use GPU instancing
+  // scene.add(instancedMesh);
+}
+
+function getPositionsAlongPolygon(polygon, offset=10, count=15) { 
+  let r = offsetPolygon(clipper, polygon, -offset);
+
+  // close the polygon
+  r.push(r[0]);
+
+  const shape = new three.Shape(r.map(p => new three.Vector2(p[0], p[1])));
+  return shape.getSpacedPoints(count);
+}
 
 // add some blocks
 blocks(scene)
@@ -82,3 +180,7 @@ function animate() {
   renderer.render(scene, camera);
 }
 animate();
+
+}
+
+mainAsync();
