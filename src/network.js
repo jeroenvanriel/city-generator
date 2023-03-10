@@ -1,6 +1,8 @@
 import * as clipperLib from 'js-angusj-clipper/web';
 import * as _ from 'lodash';
 
+import { union, extrudePolyline, offsetPolygon, intersection } from './utils';
+
 // read the polygon points from the SUMO format
 function parseShape(shape) {
   return shape.split(' ').map(coord => coord.split(',').map(Number));
@@ -36,48 +38,6 @@ function fromClipper(points) {
 
 export function loadNetwork(net, clipper) {
 
-  function union(polygons) {
-    const inputs = _.map(polygons, (polygon) => ({ data: polygon, closed: true }));
-    return clipper.clipToPaths({
-      clipType: clipperLib.ClipType.Union,
-      subjectInputs: inputs,
-      subjectFillType: clipperLib.PolyFillType.Positive
-    });
-  }
-
-  function extrudePolyline(line, delta=2) {
-   return clipper.offsetToPaths({
-      delta: delta,
-      offsetInputs: [{
-        data: line,
-        joinType: clipperLib.JoinType.Square,
-        endType: clipperLib.EndType.OpenButt
-      }],
-    })[0];
-  }
-
-  function offsetPolygon(polygon, delta=2) {
-    return clipper.offsetToPolyTree({
-      delta: delta,
-      offsetInputs: [{
-        data: polygon,
-        joinType: clipperLib.JoinType.Round,
-        endType: clipperLib.EndType.ClosedPolygon,
-      }],
-    })?.getFirst()?.contour;
-  }
-
-  function intersection(poly1, poly2) {
-    const in1 = { data: poly1, closed: true };
-    const in2 = { data: poly2, closed: true };
-    return clipper.clipToPaths({
-      clipType: clipperLib.ClipType.Intersection,
-      subjectInputs: [in1],
-      clipInputs: [in2],
-      subjectFillType: clipperLib.PolyFillType.Positive
-    });
-  }
-
   // skip `internal` edges
   const edges = _.filter(net.edge, edge => edge.$.function != 'internal');
 
@@ -90,7 +50,7 @@ export function loadNetwork(net, clipper) {
       from: edge.$.from,
       lanes: _.map(lanes, (lane, id) => {
         const points = parseShape(lane.$.shape);
-        return extrudePolyline(fromSUMO(points), EXTRUDE_SCALE * SCALE);
+        return extrudePolyline(clipper, fromSUMO(points), EXTRUDE_SCALE * SCALE);
       })
     };
   });
@@ -108,7 +68,7 @@ export function loadNetwork(net, clipper) {
   let lane_seams = [];
   _.map(edge_lane_polys, edge => {
     for (let i = 0; i < edge.lanes.length - 1; ++i) {
-      const line = intersection(edge.lanes[i], edge.lanes[i+1])[0];
+      const line = intersection(clipper, edge.lanes[i], edge.lanes[i+1])[0];
       lane_seams.push(cleanLine(line));
     }
   });
@@ -121,7 +81,7 @@ export function loadNetwork(net, clipper) {
     if (done.includes(edge.id)) return
     done.push(edge.id);
 
-    const lanes = union(edge.lanes);
+    const lanes = union(clipper, edge.lanes);
     edge_polys.push(lanes[0]);
 
     // find all potential opposite edges
@@ -131,10 +91,10 @@ export function loadNetwork(net, clipper) {
             || e.id == opposite_id)
 
     _.map(opposites, opposite => {
-        const opposite_lanes = union(opposite.lanes);
+        const opposite_lanes = union(clipper, opposite.lanes);
         edge_polys.push(opposite_lanes[0]);
 
-        const line = intersection(lanes, opposite_lanes)[0];
+        const line = intersection(clipper, lanes, opposite_lanes)[0];
         if (line) edge_seams.push(cleanLine(line));
     })
   });
@@ -146,11 +106,11 @@ export function loadNetwork(net, clipper) {
     return fromSUMO(points);
   });
 
-  const merged_edges = union(_.map(edge_polys, p => offsetPolygon(p, 40)));
-  const merged_junctions = union(_.map(junction_polys, p => offsetPolygon(p, 40)))
-  const merged_road = union([merged_edges, merged_junctions]);
+  const merged_edges = union(clipper, _.map(edge_polys, p => offsetPolygon(clipper, p, 40)));
+  const merged_junctions = union(clipper, _.map(junction_polys, p => offsetPolygon(clipper, p, 40)))
+  const merged_road = union(clipper, [merged_edges, merged_junctions]);
 
-  const lines_side = _.compact(_.map(merged_road, p => offsetPolygon(p, -LINE_OFFSET * SCALE)));
+  const lines_side = _.compact(_.map(merged_road, p => offsetPolygon(clipper, p, -LINE_OFFSET * SCALE)));
   const lines_between = [...edge_seams, ...lane_seams];
 
   function extrudeLine(lines, endType) {
@@ -189,7 +149,7 @@ export function loadNetwork(net, clipper) {
   ]
 }
 
-export function offsetPolygon(clipper, polygon, delta=2) {
+export function offsetPolygon2(clipper, polygon, delta=2) {
   return fromClipper(clipper.offsetToPolyTree({
     delta: delta * SCALE,
     offsetInputs: [{

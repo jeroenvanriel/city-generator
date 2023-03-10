@@ -4,7 +4,7 @@ import { MapControls, OrbitControls } from 'three/examples/jsm/controls/OrbitCon
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls';
 import './style.css';
 
-import { loadNetwork, offsetPolygon } from './network.js';
+import { loadNetwork, offsetPolygon2 } from './network.js';
 import grid from './grid'
 import { getRandomInt, polygonToMesh } from './utils';
 
@@ -158,7 +158,7 @@ function placeBuildings(road_polygon, block) {
 }
 
 function getPositionsAlongPolygon(polygon, offset=10, count=15) { 
-  let r = offsetPolygon(clipper, polygon, -offset);
+  let r = offsetPolygon2(clipper, polygon, -offset);
 
   // close the polygon
   r.push(r[0]);

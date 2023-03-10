@@ -1,4 +1,5 @@
 import * as three from 'three';
+import * as clipperLib from 'js-angusj-clipper/web';
 
 /** Generate a random integer between min and max. */
 export function getRandomInt (min, max) {
@@ -87,4 +88,46 @@ function drawPolygon(points, params) {
     add.circle(5, 5).fill({ color: params.color }).stroke({ color: params.color });
   });
   if (params.markers) ['start', 'mid', 'end'].map(t => line.marker(t, marker))
+}
+
+export function union(clipper, polygons) {
+  const inputs = _.map(polygons, (polygon) => ({ data: polygon, closed: true }));
+  return clipper.clipToPaths({
+    clipType: clipperLib.ClipType.Union,
+    subjectInputs: inputs,
+    subjectFillType: clipperLib.PolyFillType.Positive
+  });
+}
+
+export function extrudePolyline(clipper, line, delta=2) {
+  return clipper.offsetToPaths({
+    delta: delta,
+    offsetInputs: [{
+      data: line,
+      joinType: clipperLib.JoinType.Square,
+      endType: clipperLib.EndType.OpenButt
+    }],
+  })[0];
+}
+
+export function offsetPolygon(clipper, polygon, delta=2) {
+  return clipper.offsetToPolyTree({
+    delta: delta,
+    offsetInputs: [{
+      data: polygon,
+      joinType: clipperLib.JoinType.Round,
+      endType: clipperLib.EndType.ClosedPolygon,
+    }],
+  })?.getFirst()?.contour;
+}
+
+export function intersection(clipper, poly1, poly2) {
+  const in1 = { data: poly1, closed: true };
+  const in2 = { data: poly2, closed: true };
+  return clipper.clipToPaths({
+    clipType: clipperLib.ClipType.Intersection,
+    subjectInputs: [in1],
+    clipInputs: [in2],
+    subjectFillType: clipperLib.PolyFillType.Positive
+  });
 }
