@@ -4,14 +4,19 @@ export default function grid(scene) {
     //From https://stackoverflow.com/questions/50171936/rendering-a-polygon-with-input-vertices-in-three-js and
     //From https://jsfiddle.net/prisoner849/3xwt0yh8/
     var coordinates = [
-        new three.Vector3(0, 0, 0),
-        new three.Vector3(0, 0, -100),
-        new three.Vector3(-50, 0, -50),
+        new three.Vector2(0, 0),
+        new three.Vector2(0, -100),
+        new three.Vector2(-50, -50),
     ]
-    
-    let coordinatesGeom = new three.BufferGeometry().setFromPoints(coordinates);
+
+    const coordinatesShape = new three.Shape(coordinates);
+    const coordinatesGeom = new three.ShapeGeometry(coordinatesShape);
     const coordinatesMat = new three.MeshStandardMaterial( {color: 0x0000ff} );
     var polygon = new three.Mesh(coordinatesGeom, coordinatesMat);
+    polygon.material.side = three.DoubleSide; // visible from above and below.
+    polygon.geometry.rotateX(Math.PI / 2);
+    polygon.receiveShadow = true;
+
     scene.add(polygon);
 
     coordinatesGeom.computeBoundingBox();
