@@ -15,6 +15,8 @@ import block1 from './models/block1.glb';
 import { roadMaterial } from './material';
 import { addEnvironment } from './environment';
 
+import { createGridBuilding } from '../gridbuilding';
+
 async function mainAsync() {
 
 const clipper = await clipperLib.loadNativeClipperLibInstanceAsync(
@@ -78,9 +80,19 @@ function saveCameraLocation() {
 }
 
 function loadCameraLocation() {
-  loadCoordinateFromStorage(camera.position, "camera.position")
-  loadCoordinateFromStorage(camera.rotation, "camera.rotation")
-  loadCoordinateFromStorage(controls_move.target, "target")
+  if (
+    localStorage.getItem("camera.position.x") !== null &&
+    localStorage.getItem("camera.rotation.x") !== null &&
+    localStorage.getItem("target.x") !== null
+  ) {
+    loadCoordinateFromStorage(camera.position, "camera.position")
+    loadCoordinateFromStorage(camera.rotation, "camera.rotation")
+    loadCoordinateFromStorage(controls_move.target, "target")
+  } else { 
+    camera.position.set(-50, 200, -50)
+    controls_move.target.set(150, 0, -100);
+    controls_move.update();
+  }
 }
 
 const scene = new three.Scene();
@@ -110,7 +122,10 @@ loader.load(block1, function(gltf) {
   const block1 = gltf.scene;
   const s = 5;
   block1.scale.set(s, s, s);
-  placeBuildings(road_polygon, block1)
+  // placeBuildings(road_polygon, block1)
+
+  const building = createGridBuilding(block1);
+  scene.add(building);
 }, undefined, function(error) {
   console.error(error);
 });
