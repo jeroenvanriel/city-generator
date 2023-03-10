@@ -4,9 +4,9 @@ import { MapControls, OrbitControls } from 'three/examples/jsm/controls/OrbitCon
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls';
 import './style.css';
 
-import { loadNetwork, offsetPolygon2 } from './network.js';
+import { loadNetwork } from './network.js';
 import grid from './grid'
-import { getRandomInt, polygonToMesh } from './utils';
+import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE } from './utils';
 
 import * as clipperLib from 'js-angusj-clipper/web';
 
@@ -158,7 +158,7 @@ function placeBuildings(road_polygon, block) {
 }
 
 function getPositionsAlongPolygon(polygon, offset=10, count=15) { 
-  let r = offsetPolygon2(clipper, polygon, -offset);
+  let r = fromClipper(offsetPolygon(clipper, toClipper(polygon), -offset * SCALE));
 
   // close the polygon
   r.push(r[0]);
