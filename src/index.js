@@ -5,6 +5,7 @@ import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls
 import './style.css';
 
 import { loadNetwork, offsetPolygon } from './network.js';
+import grid from './grid'
 import { getRandomInt, polygonToMesh } from './utils';
 
 import * as clipperLib from 'js-angusj-clipper/web';
@@ -165,6 +166,9 @@ function getPositionsAlongPolygon(polygon, offset=10, count=15) {
   const shape = new three.Shape(r.map(p => new three.Vector2(p[0], p[1])));
   return shape.getSpacedPoints(count);
 }
+
+// add grid
+grid(scene)
 
 function animate() {
   requestAnimationFrame(animate);
