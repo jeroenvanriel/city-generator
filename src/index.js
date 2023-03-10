@@ -11,7 +11,8 @@ import * as clipperLib from 'js-angusj-clipper/web';
 
 import network from './networks/grid.net.xml';
 import block1 from './models/block1.glb';
-import { roadMaterial, landMaterial } from './material';
+import { roadMaterial } from './material';
+import { addEnvironment } from './environment';
 
 async function mainAsync() {
 
@@ -89,50 +90,29 @@ scene.add(light);
 const directionalLight = new three.DirectionalLight(0xffffff, 0.5);
 scene.add(directionalLight);
 
-function createLandMesh(net) {
-  // Land mesh
-  let [left, top, right, bottom] = net.location[0].$.convBoundary.split(',').map(Number);
-  // We add some small padding by default to support networks having
-  // zero-width/height.
-  const padding = 100;
-  top -= padding; bottom += padding;
-  left-= padding; right += padding;
+const r = loadNetwork(network.net, clipper)
+const [ road_polygon, side_line_polygons, between_line_polygons ] = r;
 
-  const shape = new three.Shape([[left, top], [right, top], [right, bottom], [left, bottom]].map(([x, y]) => new three.Vector2(x, -y)))
-  shape.closePath();
+const road_mesh = polygonToMesh(road_polygon, roadMaterial);
+road_mesh.translateZ(0.02); // to prevent "intersection" with lines
+scene.add(road_mesh);
 
-  const bgMesh = new three.Mesh(new three.ShapeGeometry(shape), landMaterial)
-  bgMesh.material.side = three.DoubleSide; // visible from above and below.
-  bgMesh.geometry.rotateX(Math.PI / 2);
-  bgMesh.receiveShadow = true;
+const line_material = new three.MeshStandardMaterial( { color: 0xffffff } );
+side_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
+// TODO: make these dashed
+between_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
 
-  return bgMesh;
-}
+addEnvironment(scene, network.net);
 
-loadNetwork(network.net).then(r => {
-  const [ road_polygon, side_line_polygons, between_line_polygons ] = r;
-  
-  const road_mesh = polygonToMesh(road_polygon, roadMaterial);
-  road_mesh.translateZ(0.02); // to prevent "intersection" with lines
-  scene.add(road_mesh);
-
-  const line_material = new three.MeshStandardMaterial( { color: 0xffffff } );
-  side_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
-  // TODO: make these dashed
-  between_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
-
-  scene.add(createLandMesh(network.net))
-
-  const loader = new GLTFLoader();
-  loader.load(block1, function(gltf) {
-    const block1 = gltf.scene;
-    const s = 5;
-    block1.scale.set(s, s, s);
-    placeBuildings(road_polygon, block1)
-  }, undefined, function(error) {
-    console.error(error);
-  });
-})
+const loader = new GLTFLoader();
+loader.load(block1, function(gltf) {
+  const block1 = gltf.scene;
+  const s = 5;
+  block1.scale.set(s, s, s);
+  placeBuildings(road_polygon, block1)
+}, undefined, function(error) {
+  console.error(error);
+});
 
 function placeBuildings(road_polygon, block) {
   const holes = road_polygon.slice(1);

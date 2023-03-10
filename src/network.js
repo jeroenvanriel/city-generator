@@ -34,11 +34,7 @@ function fromClipper(points) {
   ]);
 }
 
-export async function loadNetwork(net) {
-
-  const clipper = await clipperLib.loadNativeClipperLibInstanceAsync(
-    clipperLib.NativeClipperLibRequestedFormat.WasmWithAsmJsFallback
-  );
+export function loadNetwork(net, clipper) {
 
   function union(polygons) {
     const inputs = _.map(polygons, (polygon) => ({ data: polygon, closed: true }));
