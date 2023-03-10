@@ -5,8 +5,6 @@ import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls
 import './style.css';
 
 import { loadNetwork, offsetPolygon } from './network.js';
-import blocks from './blocks';
-import building from './merge';
 import grid from './grid'
 import { getRandomInt, polygonToMesh } from './utils';
 
@@ -14,7 +12,7 @@ import * as clipperLib from 'js-angusj-clipper/web';
 
 import network from './networks/grid.net.xml';
 import block1 from './models/block1.glb';
-import asphaltTexture from './asphalt.png';
+import { roadMaterial, landMaterial } from './material';
 
 async function mainAsync() {
 
@@ -56,9 +54,33 @@ controls_zoom.dynamicDampingFactor = 0.05; // set dampening factor
 controls_zoom.minDistance = 10;
 controls_zoom.maxDistance = 1000;
 
-camera.position.set(-50, 200, -50)
-controls_move.target.set(150, 0, -100);
-controls_move.update()
+loadCameraLocation();
+
+function saveCoordinateToStorage(target, prefix) {
+  localStorage.setItem(prefix + ".x", target.x)
+  localStorage.setItem(prefix + ".y", target.y)
+  localStorage.setItem(prefix + ".z", target.z)
+}
+
+function loadCoordinateFromStorage(target, prefix) {
+  target.set(
+    parseFloat(localStorage.getItem(prefix + ".x")),
+    parseFloat(localStorage.getItem(prefix + ".y")),
+    parseFloat(localStorage.getItem(prefix + ".z")),
+  )
+}
+
+function saveCameraLocation() {
+  saveCoordinateToStorage(controls_move.target, "target")
+  saveCoordinateToStorage(camera.position, "camera.position")
+  saveCoordinateToStorage(camera.rotation, "camera.rotation")
+}
+
+function loadCameraLocation() {
+  loadCoordinateFromStorage(camera.position, "camera.position")
+  loadCoordinateFromStorage(camera.rotation, "camera.rotation")
+  loadCoordinateFromStorage(controls_move.target, "target")
+}
 
 const scene = new three.Scene();
 
@@ -68,20 +90,30 @@ scene.add(light);
 const directionalLight = new three.DirectionalLight(0xffffff, 0.5);
 scene.add(directionalLight);
 
-const textureLoader = new three.TextureLoader();
+function createLandMesh(net) {
+  // Land mesh
+  let [left, top, right, bottom] = net.location[0].$.convBoundary.split(',').map(Number);
+  // We add some small padding by default to support networks having
+  // zero-width/height.
+  const padding = 100;
+  top -= padding; bottom += padding;
+  left-= padding; right += padding;
+
+  const shape = new three.Shape([[left, top], [right, top], [right, bottom], [left, bottom]].map(([x, y]) => new three.Vector2(x, -y)))
+  shape.closePath();
+
+  const bgMesh = new three.Mesh(new three.ShapeGeometry(shape), landMaterial)
+  bgMesh.material.side = three.DoubleSide; // visible from above and below.
+  bgMesh.geometry.rotateX(Math.PI / 2);
+  bgMesh.receiveShadow = true;
+
+  return bgMesh;
+}
 
 loadNetwork(network.net).then(r => {
   const [ road_polygon, side_line_polygons, between_line_polygons ] = r;
-
-  const texture = textureLoader.load(asphaltTexture)
-  texture.wrapS = three.RepeatWrapping;
-  texture.wrapT = three.RepeatWrapping;
-  texture.repeat.set(0.05, 0.05);
-  const road_material = new three.MeshBasicMaterial({
-    map: texture,
-  });
   
-  const road_mesh = polygonToMesh(road_polygon, road_material);
+  const road_mesh = polygonToMesh(road_polygon, roadMaterial);
   road_mesh.translateZ(0.02); // to prevent "intersection" with lines
   scene.add(road_mesh);
 
@@ -89,6 +121,8 @@ loadNetwork(network.net).then(r => {
   side_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
   // TODO: make these dashed
   between_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
+
+  scene.add(createLandMesh(network.net))
 
   const loader = new GLTFLoader();
   loader.load(block1, function(gltf) {
@@ -153,16 +187,6 @@ function getPositionsAlongPolygon(polygon, offset=10, count=15) {
   return shape.getSpacedPoints(count);
 }
 
-// add some blocks
-blocks(scene)
-
-// add 10 random buildings
-for (let i = 0; i < 10; i++ ) {
-  const b = building();
-  b.position.add(new three.Vector3(getRandomInt(0, 200), 0, getRandomInt(0, 200)))
-  scene.add(b)
-}
-
 // add grid
 grid(scene)
 
@@ -176,6 +200,8 @@ function animate() {
 
   controls_zoom.update();
   controls_move.update()
+
+  saveCameraLocation();
 
   renderer.render(scene, camera);
 }

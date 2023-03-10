@@ -33,6 +33,10 @@ module.exports = {
         type: 'asset/resource',
       },
       {
+        test: /\.jpg$/i,
+        type: 'asset/resource',
+      },
+      {
         test:  /\.xml$/i,
         use: [ 'xml-loader' ],
       }

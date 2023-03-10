@@ -1,6 +1,6 @@
 # City Generator
 
-![current screenshot](screenshot2.png)
+![current screenshot](screenshot.png)
 
 ## Network loading
 We load the network from a SUMO network file, which lists road edges and their lanes.
@@ -26,6 +26,8 @@ These building blocks have been modelled in Blender.
 - [x] fix network loading
 - [x] export polygon and holes
 - [x] road textures
+- [x] land mesh
 - [ ] dashed lines between lanes (maybe using three.Curve.getSpacedPoints())
 - [ ] skybox
 - [ ] anti-aliasing
+- [x] save/load camera position on reload
