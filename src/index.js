@@ -13,7 +13,7 @@ import * as clipperLib from 'js-angusj-clipper/web';
 
 import network from './networks/grid.net.xml';
 import block1 from './models/block1.glb';
-import asphaltTexture from './asphalt.png';
+import { roadMaterial, landMaterial } from './material';
 
 async function mainAsync() {
 
@@ -67,20 +67,30 @@ scene.add(light);
 const directionalLight = new three.DirectionalLight(0xffffff, 0.5);
 scene.add(directionalLight);
 
-const textureLoader = new three.TextureLoader();
+function createLandMesh(net) {
+  // Land mesh
+  let [left, top, right, bottom] = net.location[0].$.convBoundary.split(',').map(Number);
+  // We add some small padding by default to support networks having
+  // zero-width/height.
+  const padding = 100;
+  top -= padding; bottom += padding;
+  left-= padding; right += padding;
+
+  const shape = new three.Shape([[left, top], [right, top], [right, bottom], [left, bottom]].map(([x, y]) => new three.Vector2(x, -y)))
+  shape.closePath();
+
+  const bgMesh = new three.Mesh(new three.ShapeGeometry(shape), landMaterial)
+  bgMesh.material.side = three.DoubleSide; // visible from above and below.
+  bgMesh.geometry.rotateX(Math.PI / 2);
+  bgMesh.receiveShadow = true;
+
+  return bgMesh;
+}
 
 loadNetwork(network.net).then(r => {
   const [ road_polygon, side_line_polygons, between_line_polygons ] = r;
-
-  const texture = textureLoader.load(asphaltTexture)
-  texture.wrapS = three.RepeatWrapping;
-  texture.wrapT = three.RepeatWrapping;
-  texture.repeat.set(0.05, 0.05);
-  const road_material = new three.MeshBasicMaterial({
-    map: texture,
-  });
   
-  const road_mesh = polygonToMesh(road_polygon, road_material);
+  const road_mesh = polygonToMesh(road_polygon, roadMaterial);
   road_mesh.translateZ(0.02); // to prevent "intersection" with lines
   scene.add(road_mesh);
 
@@ -88,6 +98,8 @@ loadNetwork(network.net).then(r => {
   side_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
   // TODO: make these dashed
   between_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
+
+  scene.add(createLandMesh(network.net))
 
   const loader = new GLTFLoader();
   loader.load(block1, function(gltf) {
