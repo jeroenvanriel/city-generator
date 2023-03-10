@@ -168,7 +168,8 @@ function getPositionsAlongPolygon(polygon, offset=10, count=15) {
 }
 
 // add grid
-grid(scene)
+console.log(clipper)
+grid(scene,clipper)
 
 function animate() {
   requestAnimationFrame(animate);

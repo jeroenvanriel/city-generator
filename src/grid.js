@@ -1,6 +1,6 @@
 import * as three from 'three';
 import * as clipperLib from 'js-angusj-clipper/web';
-import { intersection } from './utils';
+import { intersection, polygonToMesh } from './utils';
 
 export default function grid(scene, clipper) {
     
@@ -13,11 +13,14 @@ export default function grid(scene, clipper) {
     //From https://jsfiddle.net/prisoner849/3xwt0yh8/
     var coordinates = [{x : 0, y : 0, z: 0}, {x : 0, y : 0, z: -100}, {x : -50, y : 0, z: -50}];
  
-    
-    let coordinatesGeom = new three.BufferGeometry().setFromPoints(coordinates);
-    console.log(coordinatesGeom);
+    const coordinatesShape = new three.Shape(coordinates);
+    const coordinatesGeom = new three.ShapeGeometry(coordinatesShape);
     const coordinatesMat = new three.MeshStandardMaterial( {color: 0x0000ff} );
     var polygon = new three.Mesh(coordinatesGeom, coordinatesMat);
+    polygon.material.side = three.DoubleSide; // visible from above and below.
+    polygon.geometry.rotateX(Math.PI / 2);
+    polygon.receiveShadow = true;
+
     scene.add(polygon);
 
     coordinatesGeom.computeBoundingBox();
@@ -53,14 +56,16 @@ export default function grid(scene, clipper) {
     
     let testCoordinates = [[coordinates[0].x, coordinates[0].z],
                            [coordinates[1].x, coordinates[1].z],
-                           [coordinates[2].x, coordinates[2].z]]
+                           [coordinates[2].x, coordinates[2].z]];
     console.log(testCoordinates);
     let testCell = [polyGrid[0][0], polyGrid[0][1], polyGrid[1][0], polyGrid[1][1]]
     console.log(testCell);
 
+    polygonToMesh(testCoordinates, coordinatesMat);
+    polygonToMesh(testCell, new three.MeshStandardMaterial( {color: 0x00ff0f} ));
     
-
-    intersection(clipper, testCell, testCoordinates);
+    console.log(clipper)
+    //const inter = intersection(clipper, testCell, testCoordinates);
 
 
     //create grid from boundingbox of a polygon
@@ -76,7 +81,7 @@ export default function grid(scene, clipper) {
         for (let i=0; i < grid.length; i += 1 ) {
             for(let j=0; j < grid[i].length; j += 1) {
                 grid[i][j] = [xMin + (i*gridLength),zMin + (j*gridWidth)];
-                console.log(grid[i][j]);
+                //console.log(grid[i][j]);
             }
         }
         return grid;
