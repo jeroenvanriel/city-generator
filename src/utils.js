@@ -1,6 +1,23 @@
 import * as three from 'three';
 import * as clipperLib from 'js-angusj-clipper/web';
 
+// clipper uses integer numbers, so we multiply
+export const SCALE = 1000;
+
+export function toClipper(points) {
+  return _.map(points, (point) => ({
+    x: Math.round(SCALE * point[0]),
+    y: Math.round(SCALE * point[1]),
+  }));
+}
+
+export function fromClipper(points) {
+  return _.map(points, (point) => [
+    point.x / SCALE,
+    point.y / SCALE,
+  ]);
+}
+
 /** Generate a random integer between min and max. */
 export function getRandomInt (min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;

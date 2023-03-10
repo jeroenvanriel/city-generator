@@ -27,7 +27,7 @@ function addLandMesh(scene, net) {
   let [left, top, right, bottom] = net.location[0].$.convBoundary.split(',').map(Number);
   // We add some small padding by default to support networks having
   // zero-width/height.
-  const padding = 1000;
+  const padding = 10000;
   top -= padding; bottom += padding;
   left-= padding; right += padding;
 
