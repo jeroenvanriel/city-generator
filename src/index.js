@@ -5,8 +5,6 @@ import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls
 import './style.css';
 
 import { loadNetwork, offsetPolygon } from './network.js';
-import blocks from './blocks';
-import building from './merge';
 import { getRandomInt, polygonToMesh } from './utils';
 
 import * as clipperLib from 'js-angusj-clipper/web';
@@ -187,17 +185,6 @@ function getPositionsAlongPolygon(polygon, offset=10, count=15) {
   const shape = new three.Shape(r.map(p => new three.Vector2(p[0], p[1])));
   return shape.getSpacedPoints(count);
 }
-
-// add some blocks
-blocks(scene)
-
-// add 10 random buildings
-for (let i = 0; i < 10; i++ ) {
-  const b = building();
-  b.position.add(new three.Vector3(getRandomInt(0, 200), 0, getRandomInt(0, 200)))
-  scene.add(b)
-}
-
 
 function animate() {
   requestAnimationFrame(animate);
