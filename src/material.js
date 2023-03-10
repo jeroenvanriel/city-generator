@@ -31,6 +31,6 @@ export const landMaterial = new three.MeshPhysicalMaterial({
   reflectivity: 0.05,
   // use polygonOffset to counter z-fighting with roadways.
   polygonOffset: true,
-  polygonOffsetFactor: +2,
+  polygonOffsetFactor: +5,
   polygonOffsetUnits: 1,
 });
