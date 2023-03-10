@@ -31,3 +31,5 @@ These building blocks have been modelled in Blender.
 - [ ] skybox
 - [ ] anti-aliasing
 - [x] save/load camera position on reload
+- [ ] add random trees
+- [ ] add regularly positioned street lights
