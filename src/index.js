@@ -55,9 +55,33 @@ controls_zoom.dynamicDampingFactor = 0.05; // set dampening factor
 controls_zoom.minDistance = 10;
 controls_zoom.maxDistance = 1000;
 
-camera.position.set(-50, 200, -50)
-controls_move.target.set(150, 0, -100);
-controls_move.update()
+loadCameraLocation();
+
+function saveCoordinateToStorage(target, prefix) {
+  localStorage.setItem(prefix + ".x", target.x)
+  localStorage.setItem(prefix + ".y", target.y)
+  localStorage.setItem(prefix + ".z", target.z)
+}
+
+function loadCoordinateFromStorage(target, prefix) {
+  target.set(
+    parseFloat(localStorage.getItem(prefix + ".x")),
+    parseFloat(localStorage.getItem(prefix + ".y")),
+    parseFloat(localStorage.getItem(prefix + ".z")),
+  )
+}
+
+function saveCameraLocation() {
+  saveCoordinateToStorage(controls_move.target, "target")
+  saveCoordinateToStorage(camera.position, "camera.position")
+  saveCoordinateToStorage(camera.rotation, "camera.rotation")
+}
+
+function loadCameraLocation() {
+  loadCoordinateFromStorage(camera.position, "camera.position")
+  loadCoordinateFromStorage(camera.rotation, "camera.rotation")
+  loadCoordinateFromStorage(controls_move.target, "target")
+}
 
 const scene = new three.Scene();
 
@@ -185,6 +209,8 @@ function animate() {
 
   controls_zoom.update();
   controls_move.update()
+
+  saveCameraLocation();
 
   renderer.render(scene, camera);
 }
