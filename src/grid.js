@@ -5,15 +5,11 @@ import { ColorKeyframeTrack } from 'three';
 
 export default function grid(scene, clipper) {
     
-    //From https://stackoverflow.com/questions/45773273/draw-svg-polygon-from-array-of-points-in-javascript
-    //var svg = document.getElementById("svg");
-    //var polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-    //svg.appendChild(polygon);
-
     //From https://stackoverflow.com/questions/50171936/rendering-a-polygon-with-input-vertices-in-three-js and
     //From https://jsfiddle.net/prisoner849/3xwt0yh8/
     var coordinates = [{x : 0, y : 0, z: 0}, {x : 0, y : 0, z: -55}, {x : 50, y:0, z:20}];
 
+    //add library for polygon clipping
     const polygonClipping = require('polygon-clipping')
  
     const coordinatesShape = new three.Shape(coordinates);
@@ -26,7 +22,7 @@ export default function grid(scene, clipper) {
 
     scene.add(polygon);
 
-    //compute bounding box of the coordinates
+    //compute bounding box of the polygon
     var xMin = Number.MAX_SAFE_INTEGER;
     var xMax = Number.MIN_SAFE_INTEGER;
     var zMin = Number.MAX_SAFE_INTEGER;
@@ -46,10 +42,9 @@ export default function grid(scene, clipper) {
             zMax = coordinates[i].z;
         }
     }
-    //console.log(xMin + " " + xMax + " " + zMin + " " + zMax);
     
+    //Create a grid of the bounding box of the polygon
     let polyGrid = createGrid(xMin, xMax, zMin, zMax);
-    console.log(polyGrid);
     
     let testCoordinates = [[coordinates[0].x, coordinates[0].z],
                            [coordinates[1].x, coordinates[1].z],
@@ -100,21 +95,23 @@ export default function grid(scene, clipper) {
     console.log(halfInter2);
     **/
 
-    let boolGrid = createArray(polyGrid.length - 1, polyGrid[0].length - 1);
 
+    //Create the boolean grid from the grid of the boundingbox together with the intersection of the polygon
+    let boolGrid = createArray(polyGrid.length - 1, polyGrid[0].length - 1);
 
     for (let i=0; i < polyGrid.length - 1; i += 1) {
         for (let j=0; j < polyGrid[i].length - 1; j += 1) {
+            //create cell of grid with four points of the grid
             let gridCellPoly = [polyGrid[i][j], polyGrid[i][j+1], polyGrid[i+1][j], polyGrid[i+1][j+1]];
             let gridCellPolytoMesh = polygonToMesh([gridCellPoly], new three.MeshStandardMaterial( {color: 0xfff000} ));
             scene.add(gridCellPolytoMesh);
 
+            //compute intersection between grid cell and polygon
             let polyIntersectionCheck = polygonClipping.intersection([testCoordinates], [gridCellPoly]);
-            console.log(polyIntersectionCheck);
+            //check if intersection is the whole grid cell
             if (polyIntersectionCheck.length == 2) {
                 let counter = 0;
                 for (let k=0; k < polyIntersectionCheck.length; k++) {
-                    console.log(polyIntersectionCheck[k][0].length)
                     for (let l=0; l < polyIntersectionCheck[k][0].length; l++) {
                         if ((polyIntersectionCheck[k][0][l].includes(polyGrid[i][j][0]) && polyIntersectionCheck[k][0][l].includes(polyGrid[i][j][1])) ||
                             (polyIntersectionCheck[k][0][l].includes(polyGrid[i][j+1][0]) && polyIntersectionCheck[k][0][l].includes(polyGrid[i][j+1][1])) ||
@@ -122,16 +119,13 @@ export default function grid(scene, clipper) {
                             (polyIntersectionCheck[k][0][l].includes(polyGrid[i+1][j+1][0]) && polyIntersectionCheck[k][0][l].includes(polyGrid[i+1][j+1][1]))) {
                                 counter++;
                             }
-                        console.log(counter)
                         if (counter >= 5 && polyIntersectionCheck[0][0].length == 4 && polyIntersectionCheck[1][0].length == 4) {
-                            console.log("correct")
                             boolGrid[i][j] = 1;
                         } else {
                             boolGrid[i][j] = 0; 
                         }
                     }
                 }
-                //console.log(counter);
             } else {
                 boolGrid[i][j] = 0;
             }
@@ -139,23 +133,17 @@ export default function grid(scene, clipper) {
     }
     console.log(boolGrid);
 
-
     //create grid from boundingbox of a polygon
     function createGrid(xMin, xMax, zMin, zMax) {
         const gridLength = 10; //should be length of building
         const gridWidth = 10; //should be width of building
         const xDifForGrid = Math.ceil((xMax - xMin) / gridLength);
         const zDifForGrid = Math.ceil((zMax - zMin) / gridWidth);
-        //console.log(xDifForGrid + ", " + zDifForGrid);
         var grid = createArray(xDifForGrid + 1, zDifForGrid + 1);
-        //console.log(grid);
-        //console.log(grid.length);
-        //console.log(grid[0].length);
 
         for (let i=0; i < grid.length; i += 1 ) {
             for(let j=0; j < grid[i].length; j += 1) {
                 grid[i][j] = [xMin + (i*gridLength),zMin + (j*gridWidth)];
-                //console.log(grid[i][j]);
             }
         }
         return grid;
@@ -164,6 +152,7 @@ export default function grid(scene, clipper) {
 
 
     //from https://stackoverflow.com/questions/966225/how-can-i-create-a-two-dimensional-array-in-javascript/966938#966938
+    //function to create array
     function createArray(length) {
         var arr = new Array(length || 0),
             i = length;
