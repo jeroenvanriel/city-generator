@@ -15,7 +15,7 @@ import block1 from './models/block1.glb';
 import { roadMaterial } from './material';
 import { addEnvironment } from './environment';
 
-import { createGridBuilding } from '../gridbuilding';
+//import { createGridBuilding } from '../gridbuilding';
 
 async function mainAsync() {
 
@@ -124,8 +124,8 @@ loader.load(block1, function(gltf) {
   block1.scale.set(s, s, s);
   // placeBuildings(road_polygon, block1)
 
-  const building = createGridBuilding(block1);
-  scene.add(building);
+  //const building = createGridBuilding(block1);
+  //scene.add(building);
 }, undefined, function(error) {
   console.error(error);
 });
@@ -183,7 +183,6 @@ function getPositionsAlongPolygon(polygon, offset=10, count=15) {
 }
 
 // add grid
-console.log(clipper)
 grid(scene,clipper)
 
 function animate() {
