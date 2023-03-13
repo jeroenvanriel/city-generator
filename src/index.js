@@ -15,7 +15,7 @@ import block1 from './models/block1.glb';
 import { roadMaterial } from './material';
 import { addEnvironment } from './environment';
 
-//import { createGridBuilding } from '../gridbuilding';
+import { createGridBuilding } from '../gridbuilding';
 
 async function mainAsync() {
 
@@ -122,13 +122,51 @@ loader.load(block1, function(gltf) {
   const block1 = gltf.scene;
   const s = 5;
   block1.scale.set(s, s, s);
-  // placeBuildings(road_polygon, block1)
 
-  //const building = createGridBuilding(block1);
-  //scene.add(building);
+  // placeBuildings(road_polygon, block1)
+  placeGridBuildings(road_polygon, block1)
+
 }, undefined, function(error) {
   console.error(error);
 });
+
+function placeGridBuildings(road_polygon, block) {
+  const holes = road_polygon.slice(1);
+
+  const bb = new three.Box3();
+  bb.setFromObject(block);
+  const model_width = bb.max.x - bb.min.x;
+  const model_height = bb.max.y - bb.min.y;
+  const model_depth = bb.max.z - bb.min.z;
+
+  _.forEach(holes, hole => {
+    const cells = grid(clipper, hole);
+
+    const group = new three.Group;
+    for (let x = 0; x < cells.length; x++) {
+      for (let y = 0; y < cells[0].length; y++) {
+        const poly = cells[x][y];
+        if (poly == null) continue;
+
+        const levels = getRandomInt(1, 4);
+        for (let l = 0; l < levels; l++) {
+            const cube = block.clone();
+
+            // cube.position.add(new three.Vector3(x * model_width, l * model_height, y * model_depth));
+            cube.position.add(new three.Vector3(
+              poly[0][0],
+              l * model_height,
+              poly[0][1],
+            ))
+
+            cube.position.add(new three.Vector3(0, model_height / 2, 0));
+            group.add(cube);
+        }
+      }
+    }
+    scene.add(group);
+  })
+}
 
 function placeBuildings(road_polygon, block) {
   const holes = road_polygon.slice(1);
@@ -182,19 +220,6 @@ function getPositionsAlongPolygon(polygon, offset=10, count=15) {
   return shape.getSpacedPoints(count);
 }
 
-// add grid
-let polygon = [[0,0], [50, 20], [0, -55], [0, 0]]; // closed polygon
-const cells = grid(clipper, polygon, scene);
-
-for (let i = 0; i < cells.length; i++) {
-  for (let j = 0; j < cells[0].length; j++) {
-    const poly = cells[i][j];
-    if (poly == null) continue;
-    let gridCellPolytoMesh = polygonToMesh([poly],
-      new three.MeshStandardMaterial( ((i+(j%2)) % 2) == 0 ? {color: 0xfff000} : {color: 0xff0000}  ));
-    scene.add(gridCellPolytoMesh)
-  }
-}
 
 function animate() {
   requestAnimationFrame(animate);
