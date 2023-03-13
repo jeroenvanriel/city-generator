@@ -44,6 +44,7 @@ export function gaussianRandom(start, end) {
   return Math.floor(start + gaussianRand() * (end - start + 1));
 }
 
+/** Generate 3d mesh from polygon, given as a list [outer, hole, hole, ..., hole]. */
 export function polygonToMesh(polygon, material) {
   let outer = [];
   let holes = [];
