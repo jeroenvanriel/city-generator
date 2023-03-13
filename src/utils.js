@@ -149,3 +149,14 @@ export function intersection(clipper, poly1, poly2) {
     subjectFillType: clipperLib.PolyFillType.Positive
   });
 }
+
+export function difference(clipper, poly1, poly2) {
+  const in1 = { data: poly1, closed: true };
+  const in2 = { data: poly2, closed: true };
+  return clipper.clipToPaths({
+    clipType: clipperLib.ClipType.Difference,
+    subjectInputs: [in1],
+    clipInputs: [in2],
+    subjectFillType: clipperLib.PolyFillType.NonZero
+  });
+}

@@ -183,7 +183,18 @@ function getPositionsAlongPolygon(polygon, offset=10, count=15) {
 }
 
 // add grid
-grid(scene,clipper)
+let polygon = [[0,0], [50, 20], [0, -55], [0, 0]]; // closed polygon
+const cells = grid(clipper, polygon, scene);
+
+for (let i = 0; i < cells.length; i++) {
+  for (let j = 0; j < cells[0].length; j++) {
+    const poly = cells[i][j];
+    if (poly == null) continue;
+    let gridCellPolytoMesh = polygonToMesh([poly],
+      new three.MeshStandardMaterial( ((i+(j%2)) % 2) == 0 ? {color: 0xfff000} : {color: 0xff0000}  ));
+    scene.add(gridCellPolytoMesh)
+  }
+}
 
 function animate() {
   requestAnimationFrame(animate);
