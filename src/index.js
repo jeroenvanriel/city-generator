@@ -15,8 +15,6 @@ import block1 from './models/block1.glb';
 import { roadMaterial } from './material';
 import { addEnvironment } from './environment';
 
-import { createGridBuilding } from '../gridbuilding';
-
 async function mainAsync() {
 
 const clipper = await clipperLib.loadNativeClipperLibInstanceAsync(
