@@ -150,13 +150,14 @@ function placeGridBuildings(road_polygon, block) {
         for (let l = 0; l < levels; l++) {
             const cube = block.clone();
 
-            // cube.position.add(new three.Vector3(x * model_width, l * model_height, y * model_depth));
+            // TODO: fix (i.e., center) the exact grid position w.r.t. to hole polygon
             cube.position.add(new three.Vector3(
-              poly[0][0],
+              poly[0][0] + 5,
               l * model_height,
-              poly[0][1],
+              poly[0][1] + 5,
             ))
 
+            // TODO: fix this in the block model itself
             cube.position.add(new three.Vector3(0, model_height / 2, 0));
             group.add(cube);
         }
