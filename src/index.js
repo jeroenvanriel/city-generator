@@ -12,6 +12,7 @@ import * as clipperLib from 'js-angusj-clipper/web';
 
 import network from './networks/grid.net.xml';
 import block1 from './models/block1.glb';
+import streetlamp from './models/street_lamp.glb';
 import { roadMaterial } from './material';
 import { addEnvironment } from './environment';
 
@@ -128,6 +129,17 @@ loader.load(block1, function(gltf) {
   console.error(error);
 });
 
+loader.load(streetlamp, function(gltf) {
+  const streetlamp = gltf.scene
+  const s = 0.02;
+  streetlamp.scale.set(s,s,s);
+  
+  placeStreetlamps(road_polygon, streetlamp);
+
+}, undefined, function(error) {
+  console.error(error);
+});
+
 function placeGridBuildings(road_polygon, block) {
   const holes = road_polygon.slice(1);
 
@@ -207,6 +219,24 @@ function placeBuildings(road_polygon, block) {
 
   // TODO: use GPU instancing
   // scene.add(instancedMesh);
+}
+
+function placeStreetlamps(road_polygon, streetlamp) {
+  const holes = road_polygon.slice(1);
+  let points = [];
+  for (let i = 0; i < holes.length; i++) {
+    points.push(...getPositionsAlongPolygon(holes[i], 2, 12));
+  }
+
+  const bb = new three.Box3();
+  bb.setFromObject(streetlamp);
+  const model_height = bb.max.y - bb.min.y;
+
+  _.forEach(points, point => {
+      const lamp = streetlamp.clone();
+      lamp.position.add(new three.Vector3(point.x, model_height/2, point.y));
+      scene.add(lamp);
+    })
 }
 
 function getPositionsAlongPolygon(polygon, offset=10, count=15) { 
