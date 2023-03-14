@@ -11,7 +11,8 @@ import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCA
 import * as clipperLib from 'js-angusj-clipper/web';
 
 import network from './networks/grid.net.xml';
-import block1 from './models/block1.glb';
+//import block1 from './models/block1.glb';
+import block1 from './models/block_grey.glb';
 import streetlamp from './models/street_lamp.glb';
 import { roadMaterial } from './material';
 import { addEnvironment } from './environment';
@@ -235,6 +236,8 @@ function placeStreetlamps(road_polygon, streetlamp) {
   _.forEach(points, point => {
       const lamp = streetlamp.clone();
       lamp.position.add(new three.Vector3(point.x, model_height/2, point.y));
+      //const lamp_light = new three.PointLight(0xffff66, 1, 5);
+      //lamp_light.position.add(new three.Vector3(point.x, model_height, point.y))
       scene.add(lamp);
     })
 }
