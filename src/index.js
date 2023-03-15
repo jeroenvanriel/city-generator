@@ -34,7 +34,8 @@ const scene = new three.Scene();
 const light = new three.AmbientLight(0x404040);
 scene.add(light);
 
-const directionalLight = new three.DirectionalLight(0xffffff, 0.5);
+const directionalLight = new three.DirectionalLight(0xffffff, 1);
+directionalLight.position.set(1, 1, 1).normalize();
 scene.add(directionalLight);
 
 // main drawing

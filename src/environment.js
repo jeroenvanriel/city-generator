@@ -12,7 +12,7 @@ import skybox6 from './sky/TropicalSunnyDayBack2048.png';
 export function addEnvironment(scene, net) {
   addSkybox(scene);
   addLandMesh(scene, net);
-  scene.fog = new three.Fog(0xcccccc, 100, 500);
+  scene.fog = new three.Fog(0xcccccc, 400, 1800);
 }
 
 function addSkybox(scene) {

@@ -5,12 +5,12 @@ import { addEnvironment } from './environment';
 import { grid } from './grid'
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE } from './utils';
+import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE, polygonToShape } from './utils';
 
-import network from './networks/grid.net.xml';
+import network from './networks/real2.net.xml';
 import block1 from './models/block_grey.glb';
 import streetlamp from './models/street_lamp.glb';
-import { roadMaterial } from './material';
+import { roadMaterial, red, blue, green } from './material';
 
 const OBJECTS = [
   { obj: block1, scale: 5 },
@@ -24,6 +24,8 @@ export function build(scene, clipper) {
     drawRoad(scene, road_polygon, side_line_polygons, between_line_polygons);
     
     const holes = road_polygon.slice(1);
+
+    _.forEach(holes, hole => buildRowHouses(scene, clipper, hole))
 
     loadObjects(OBJECTS).then(r => console.log('loaded', r));
 }
@@ -75,6 +77,38 @@ function drawRoad(scene, road_polygon, side_line_polygons, between_line_polygons
     side_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
     // TODO: make these dashed
     between_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
+}
+
+function buildRowHouses(scene, clipper, hole) {
+  const sidewalkWidth = 10;
+  const roofThickness = 1;
+  const houseDepth = 15;
+  const height = 10;
+
+  const s = fromClipper(offsetPolygon(clipper, toClipper(hole), -sidewalkWidth * SCALE));
+  const h1 = fromClipper(offsetPolygon(clipper, toClipper(s), -houseDepth * SCALE));
+  const h2 = fromClipper(offsetPolygon(clipper, toClipper(s), -(houseDepth + roofThickness) * SCALE));
+
+  // draw sidewalks
+  scene.add(polygonToMesh([hole, s], red));
+
+  const rooftopShape = polygonToShape([h1, h2]);
+
+  const extrudeSettings = {
+    steps: 1,
+    depth: height,
+    bevelEnabled: true,
+    bevelThickness: 5,
+    bevelSize: houseDepth,
+    bevelOffset: 0,
+    bevelSegments: 1
+  };
+
+  const geometry = new three.ExtrudeGeometry( rooftopShape, extrudeSettings );
+  const mesh = new three.Mesh( geometry, blue ) ;
+  mesh.translateY(height);
+  mesh.rotation.set(Math.PI / 2, 0, 0);
+  scene.add( mesh );
 }
 
 function placeGridBuildings(hole, block) {
@@ -174,6 +208,6 @@ function getPositionsAlongPolygon(polygon, offset=10, count=15) {
   // close the polygon
   r.push(r[0]);
 
-  const shape = new three.Shape(r.map(p => new three.Vector2(p[0], p[1])));
+  const shape = polygonToShape(r);
   return shape.getSpacedPoints(count);
 }

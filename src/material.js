@@ -34,3 +34,8 @@ export const landMaterial = new three.MeshPhysicalMaterial({
   polygonOffsetFactor: +5,
   polygonOffsetUnits: 1,
 });
+
+
+export const red = new three.MeshStandardMaterial({ color: 'red', side: three.DoubleSide });
+export const green = new three.MeshStandardMaterial({ color: 'green', side: three.DoubleSide });
+export const blue = new three.MeshStandardMaterial({ color: 'blue', side: three.DoubleSide });
