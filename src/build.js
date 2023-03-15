@@ -208,6 +208,6 @@ function getPositionsAlongPolygon(polygon, offset=10, count=15) {
   // close the polygon
   r.push(r[0]);
 
-  const shape = polygonToShape(r);
+  const shape = polygonToShape([r]);
   return shape.getSpacedPoints(count);
 }
