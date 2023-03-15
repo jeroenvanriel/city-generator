@@ -1,7 +1,7 @@
 import * as three from 'three';
 import { difference, toClipper } from './utils';
 
-export default function grid(clipper, polygon) {
+export function grid(clipper, polygon) {
     // compute bounding box of the polygon
     const bb = new three.Box2();
     bb.setFromPoints(polygon.map(p => new three.Vector2(p[0], p[1])));
