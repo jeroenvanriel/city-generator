@@ -1,4 +1,4 @@
-import { BufferGeometry, Float32BufferAttribute, Vector2, Vector3 } from 'three';
+import { BufferGeometry, Float32BufferAttribute } from 'three';
 
 class RowhouseGeometry extends BufferGeometry {
 
