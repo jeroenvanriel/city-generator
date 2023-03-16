@@ -45,7 +45,7 @@ export function gaussianRandom(start, end) {
 }
 
 /** Generate three.Shape from polygon, given as a list [outer, hole, hole, ..., hole].  */
-export function polygonToShape(polygon) {
+export function polygonToShape(polygon, closed=false) {
   let outer = [];
   let holes = [];
 
@@ -60,6 +60,7 @@ export function polygonToShape(polygon) {
   });
 
   const shape = new three.Shape(outer);
+  if (closed) shape.closePath();
   shape.holes = holes;
 
   return shape;

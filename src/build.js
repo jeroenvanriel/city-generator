@@ -5,14 +5,15 @@ import { addEnvironment } from './environment';
 import { grid } from './grid'
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE, polygonToShape } from './utils';
+import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE, polygonToShape, extrudePolyline } from './utils';
 
-import network from './networks/real2.net.xml';
+import network from './networks/real1.net.xml';
 import block1 from './models/block_grey.glb';
 import streetlamp from './models/street_lamp.glb';
 import { roadMaterial, red, blue, green } from './material';
 
-import { ExtrudeGeometry } from './buildingGeometry.js';
+import { RowhouseGeometry } from './rowhouseGeometry';
+
 
 const OBJECTS = [
   { obj: block1, scale: 5 },
@@ -90,34 +91,23 @@ function drawRoad(scene, road_polygon, side_line_polygons, between_line_polygons
 }
 
 function buildRowHouses(scene, clipper, hole) {
-  const sidewalkWidth = 10;
-  const roofThickness = 1;
-  const houseDepth = 15;
-  const height = 10;
+  const sidewalkWidth = 5;
+  const houseOffset = 15;
+  const houseDepth = 8;
+  const houseHeight = 10;
 
-  const s = fromClipper(offsetPolygon(clipper, toClipper(hole), -sidewalkWidth * SCALE));
-  const h1 = fromClipper(offsetPolygon(clipper, toClipper(s), -houseDepth * SCALE));
-  const h2 = fromClipper(offsetPolygon(clipper, toClipper(s), -(houseDepth + roofThickness) * SCALE));
+  const sidewalkInner = fromClipper(offsetPolygon(clipper, toClipper(hole), - sidewalkWidth * SCALE));
 
   // draw sidewalks
-  scene.add(polygonToMesh([hole, s], red));
+  scene.add(polygonToMesh([hole, sidewalkInner], red));
 
-  const rooftopShape = polygonToShape([h1, h2]);
+  const houseMidline = offsetPolygon(clipper, toClipper(hole), - (houseOffset) * SCALE);
+  const basePolygon = fromClipper(extrudePolyline(clipper, houseMidline, houseDepth * SCALE));
+  scene.add(polygonToMesh([basePolygon], blue));
 
-  const extrudeSettings = {
-    steps: 1,
-    depth: height,
-    bevelEnabled: true,
-    bevelThickness: 5,
-    bevelSize: houseDepth,
-    bevelOffset: 0,
-    bevelSegments: 1
-  };
-
-  const geometry = new ExtrudeGeometry( rooftopShape, extrudeSettings );
-  const mesh = new three.Mesh( geometry, blue ) ;
-  mesh.translateY(height);
-  mesh.rotation.set(Math.PI / 2, 0, 0);
+  const base = polygonToShape([basePolygon], true);
+  const geometry = new RowhouseGeometry(base.getPoints(), houseHeight);
+  const mesh = new three.Mesh(geometry, blue);
   scene.add( mesh );
 }
 
