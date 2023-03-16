@@ -15,14 +15,41 @@ export function buildRowHouses(scene, clipper, hole) {
   // draw sidewalks
   scene.add(polygonToMesh([hole, sidewalkInner], red));
 
-  const houseMidlineClipper = offsetPolygon(clipper, toClipper(hole), - (houseOffset) * SCALE);
-  const basePolygon = fromClipper(extrudePolyline(clipper, houseMidlineClipper, houseDepth * SCALE));
-  basePolygon.push(basePolygon[0]); // close it
+  const row = fromClipper(offsetPolygon(clipper, toClipper(hole), - (houseOffset) * SCALE));
 
-  buildHouse(scene,
-    asVector2List(basePolygon),
-    asVector2List(fromClipper(houseMidlineClipper))
-  )
+  const THRESHOLD = 5;
+  let segments = [];
+  // current consecutive
+  let currentSegment = [row[0]];
+  for (let i = 1; i < row.length; i++) {
+
+    const dist = new three.Vector2(row[i][0], row[i][1]).distanceTo(
+      new three.Vector2(row[i - 1][0], row[i - 1][1])
+    )
+
+    if (dist > THRESHOLD) {
+      currentSegment.push(row[i])
+    } else {
+      if (currentSegment.length >= 2) {
+        segments.push(currentSegment);
+      }
+      currentSegment = [];
+    }
+  }
+  // also add the last consecutive segment
+  if (currentSegment.length >= 2) {
+    segments.push(currentSegment)
+  }
+
+  for (const segment of segments) {
+    const basePolygon = fromClipper(extrudePolyline(clipper, toClipper(segment), houseDepth * SCALE));
+    basePolygon.push(basePolygon[0]); // close it
+
+    buildHouse(scene,
+      asVector2List(basePolygon),
+      asVector2List(segment)
+    )
+  }
 }
 
 function buildHouse(scene, basePoints, houseMidline) {
