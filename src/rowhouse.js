@@ -8,7 +8,6 @@ import { red, blue } from './material.js';
 export function buildRowHouses(scene, clipper, hole) {
   const sidewalkWidth = 5;
   const houseOffset = 15;
-  const houseDepth = 8;
 
   const sidewalkInner = fromClipper(offsetPolygon(clipper, toClipper(hole), - sidewalkWidth * SCALE));
 
@@ -21,6 +20,8 @@ export function buildRowHouses(scene, clipper, hole) {
   const houseLines = cutSegments(segments)
 
   for (const segment of houseLines) {
+    const houseDepth = getRandomInt(8, 14);
+
     const basePolygon = fromClipper(extrudePolyline(clipper, toClipper(segment), houseDepth * SCALE));
     basePolygon.push(basePolygon[0]); // close it
 
@@ -106,8 +107,8 @@ function cutSegments(segments) {
 }
 
 function buildHouse(scene, basePoints, houseMidline) {
-  const houseHeight = 10;
-  const roofHeight = 5;
+  const houseHeight = getRandomInt(8, 20);
+  const roofHeight = getRandomInt(4, 15);
 
   const geometry = new RowhouseGeometry(basePoints, houseHeight);
   const mesh = new three.Mesh(geometry, blue);
