@@ -1,7 +1,7 @@
 import * as three from 'three';
 
-import asphaltImage from './asphalt.png';
-import grassImage from './grass.jpg';
+import asphaltImage from './textures/asphalt.png';
+import grassImage from './textures/grass.jpg';
 
 const textureLoader = new three.TextureLoader();
 
