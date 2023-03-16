@@ -2,12 +2,12 @@ import * as three from 'three';
 
 import { landMaterial } from './material';
 
-import skybox1 from './sky/TropicalSunnyDayLeft2048.png';
-import skybox2 from './sky/TropicalSunnyDayRight2048.png';
-import skybox3 from './sky/TropicalSunnyDayUp2048.png';
-import skybox4 from './sky/TropicalSunnyDayDown2048.png';
-import skybox5 from './sky/TropicalSunnyDayFront2048.png';
-import skybox6 from './sky/TropicalSunnyDayBack2048.png';
+import skybox1 from './textures/sky/TropicalSunnyDayLeft2048.png';
+import skybox2 from './textures/sky/TropicalSunnyDayRight2048.png';
+import skybox3 from './textures/sky/TropicalSunnyDayUp2048.png';
+import skybox4 from './textures/sky/TropicalSunnyDayDown2048.png';
+import skybox5 from './textures/sky/TropicalSunnyDayFront2048.png';
+import skybox6 from './textures/sky/TropicalSunnyDayBack2048.png';
 
 export function addEnvironment(scene, net) {
   addSkybox(scene);
