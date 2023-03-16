@@ -18,6 +18,10 @@ export function fromClipper(points) {
   ]);
 }
 
+export function asVector2List(polygon) {
+  return polygon.map(p => new three.Vector2(p[0], p[1]));
+}
+
 /** Generate a random integer between min and max. */
 export function getRandomInt (min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;

@@ -5,7 +5,7 @@ import { addEnvironment } from './environment';
 import { grid } from './grid'
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE, polygonToShape, extrudePolyline } from './utils';
+import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE, polygonToShape, extrudePolyline, asVector2List } from './utils';
 
 import network from './networks/real1.net.xml';
 import block1 from './models/block_grey.glb';
@@ -13,6 +13,7 @@ import streetlamp from './models/street_lamp.glb';
 import { roadMaterial, red, blue, green } from './material';
 
 import { RowhouseGeometry } from './rowhouseGeometry';
+import { RowhouseRoofGeometry } from './rowhouseRoofGeometry.js';
 
 
 const OBJECTS = [
@@ -95,20 +96,28 @@ function buildRowHouses(scene, clipper, hole) {
   const houseOffset = 15;
   const houseDepth = 8;
   const houseHeight = 10;
+  const roofHeight = 5;
 
   const sidewalkInner = fromClipper(offsetPolygon(clipper, toClipper(hole), - sidewalkWidth * SCALE));
 
   // draw sidewalks
   scene.add(polygonToMesh([hole, sidewalkInner], red));
 
-  const houseMidline = offsetPolygon(clipper, toClipper(hole), - (houseOffset) * SCALE);
-  const basePolygon = fromClipper(extrudePolyline(clipper, houseMidline, houseDepth * SCALE));
+  const houseMidlineClipper = offsetPolygon(clipper, toClipper(hole), - (houseOffset) * SCALE);
+  const basePolygon = fromClipper(extrudePolyline(clipper, houseMidlineClipper, houseDepth * SCALE));
   scene.add(polygonToMesh([basePolygon], blue));
 
-  const base = polygonToShape([basePolygon], true);
-  const geometry = new RowhouseGeometry(base.getPoints(), houseHeight);
+  const basePoints = asVector2List(basePolygon);
+  const houseMidline = asVector2List(fromClipper(houseMidlineClipper));
+
+  const geometry = new RowhouseGeometry(basePoints, houseHeight);
   const mesh = new three.Mesh(geometry, blue);
   scene.add( mesh );
+
+  const roofGeometry = new RowhouseRoofGeometry(basePoints, houseMidline, roofHeight);
+  const roofMesh = new three.Mesh(roofGeometry, red);
+  roofMesh.translateY(houseHeight);
+  scene.add(roofMesh);
 }
 
 function placeGridBuildings(hole, block) {
