@@ -19,8 +19,6 @@ class RowhouseRoofGeometry extends BufferGeometry {
 		this.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
 		this.computeVertexNormals();
 
-        console.log(vertices)
-
 		// functions
 
 		function generateBufferData() {
