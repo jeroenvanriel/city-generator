@@ -12,6 +12,8 @@ import block1 from './models/block_grey.glb';
 import streetlamp from './models/street_lamp.glb';
 import { roadMaterial, red, blue, green } from './material';
 
+import { ExtrudeGeometry } from './buildingGeometry.js';
+
 const OBJECTS = [
   { obj: block1, scale: 5 },
   { obj: streetlamp, scale: 0.02 },
@@ -112,7 +114,7 @@ function buildRowHouses(scene, clipper, hole) {
     bevelSegments: 1
   };
 
-  const geometry = new three.ExtrudeGeometry( rooftopShape, extrudeSettings );
+  const geometry = new ExtrudeGeometry( rooftopShape, extrudeSettings );
   const mesh = new three.Mesh( geometry, blue ) ;
   mesh.translateY(height);
   mesh.rotation.set(Math.PI / 2, 0, 0);
