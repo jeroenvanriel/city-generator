@@ -70,13 +70,21 @@ function loadObjects(objects) {
 
 function drawRoad(scene, road_polygon, side_line_polygons, between_line_polygons) {
     const road_mesh = polygonToMesh(road_polygon, roadMaterial);
-    road_mesh.translateZ(0.02); // to prevent "intersection" with lines
     scene.add(road_mesh);
 
     const line_material = new three.MeshStandardMaterial( { color: 0xffffff } );
-    side_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
+    const side_lines = side_line_polygons.map(p => polygonToMesh(p, line_material));
+    _.forEach(side_lines, line => {
+      line.translateZ(-0.01); // to prevent intersection
+      scene.add(line);
+    });
+
     // TODO: make these dashed
-    between_line_polygons.map(p => scene.add(polygonToMesh(p, line_material)));
+    const between_lines = between_line_polygons.map(p => polygonToMesh(p, line_material));
+    _.forEach(between_lines, line => {
+      line.translateZ(-0.01); // to prevent intersection
+      scene.add(line);
+    });
 }
 
 function buildRowHouses(scene, clipper, hole) {
