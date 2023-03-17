@@ -18,10 +18,6 @@ export function fromClipper(points) {
   ]);
 }
 
-export function asVector2List(polygon) {
-  return polygon.map(p => new three.Vector2(p[0], p[1]));
-}
-
 /** Generate a random integer between min and max. */
 export function getRandomInt (min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -54,11 +50,11 @@ export function polygonToShape(polygon, closed=false) {
   let holes = [];
 
   // first one is the outer boundary
-  outer = _.map(polygon[0], (point) => new three.Vector2( point[0], point[1] ));
+  outer = asVector2List(polygon[0]);
 
   // the rest of the polygons define the holes
-  _.forEach(polygon.slice(1), p => {
-    const points = _.map(p, (point) => new three.Vector2( point[0], point[1] ));
+  _.forEach(polygon.slice(1), hole => {
+    const points = asVector2List(hole);
     const path = new three.Path(points);
     holes.push(path);
   });
@@ -81,45 +77,7 @@ export function polygonToMesh(polygon, material) {
   return mesh;
 }
 
-/* TODO: For creating dashed line between lanes. */
-function lineToMesh(line_polygon) {
-  const points = _.map(line, (point) => new three.Vector2( point[0], point[1] ));
-  points.push(points[0]); // close the shape
-
-  // TODO: enable spaced line parts, maybe using `getSpacedPoints()`
-  // const shape = new three.Shape(points);
-  // shape.autoClose = true;
-  // const points = shape.getPoints();
-  // const spacedPoints = shape.getSpacedPoints( 50 );
-
-  const geometryPoints = new three.BufferGeometry().setFromPoints( points );
-  // const geometrySpacedPoints = new three.BufferGeometry().setFromPoints( spacedPoints );
-
-  const material = new three.LineBasicMaterial({ color: new three.Color(0, 0, 1) });
-  const mesh = new three.Line(geometryPoints, material);
-  mesh.position.set(0, 0.05, 0);
-  mesh.rotation.set(Math.PI / 2, 0, 0);
-  return mesh;
-}
-
-/* TODO: For debugging the network loader. */
-function drawPolygon(points, params) {
-  const defaults = { closed: true, color: 'black', fill: 'none', markers: false };
-  params = Object.assign(defaults, params);
-
-  const func = params.closed ? 'polygon' : 'polyline';
-  const line = draw[func](points)
-    .translate(750, 750)
-    .scale(6, 0, 0)
-    .fill(params.fill)
-    .stroke({ width: 0.2, color: params.color });
-
-  const marker = draw.marker(5, 5, function(add) {
-    add.circle(5, 5).fill({ color: params.color }).stroke({ color: params.color });
-  });
-  if (params.markers) ['start', 'mid', 'end'].map(t => line.marker(t, marker))
-}
-
+/** Draw little sphere at exact location (for debugging). */
 export function drawSphere(scene, point, params) {
   const defaults = { size: 1, color: 'green' };
   params = Object.assign(defaults, params);
@@ -133,6 +91,25 @@ export function drawSphere(scene, point, params) {
     mesh.position.copy(point);
   }
   scene.add(mesh);
+}
+
+/** Robust calculation of intersection of lines p1-p2 and p3-p4. */
+export function intersection(p1, p2, p3, p4) {
+  const x = (p1.x * p2.y - p1.y * p2.x)*(p3.x - p4.x) - (p1.x - p2.x)*(p3.x*p4.y - p3.y*p4.x);
+  const xd = (p1.x - p2.x)*(p3.y - p4.y) - (p1.y - p2.y)*(p3.x - p4.x);
+
+  const y = (p1.x * p2.y - p1.y * p2.x)*(p3.y - p4.y) - (p1.y - p2.y)*(p3.x*p4.y - p3.y*p4.x);
+  const yd = (p1.x - p2.x)*(p3.y - p4.y) - (p1.y - p2.y)*(p3.x - p4.x);
+
+  // TODO: parallel/coincident check
+
+  return new three.Vector2(x/xd, y/yd);
+}
+
+/** May be regarded an idempotent operator. */
+export function asVector2List(polygon) {
+  if (polygon[0].x && polygon[0].y) return polygon;
+  return polygon.map(p => new three.Vector2(p[0], p[1]));
 }
 
 export function union(clipper, polygons) {
@@ -186,4 +163,43 @@ export function difference(clipper, poly1, poly2) {
     clipInputs: [in2],
     subjectFillType: clipperLib.PolyFillType.NonZero
   });
+}
+
+/* TODO: For creating dashed line between lanes. */
+function lineToMesh(line_polygon) {
+  const points = _.map(line, (point) => new three.Vector2( point[0], point[1] ));
+  points.push(points[0]); // close the shape
+
+  // TODO: enable spaced line parts, maybe using `getSpacedPoints()`
+  // const shape = new three.Shape(points);
+  // shape.autoClose = true;
+  // const points = shape.getPoints();
+  // const spacedPoints = shape.getSpacedPoints( 50 );
+
+  const geometryPoints = new three.BufferGeometry().setFromPoints( points );
+  // const geometrySpacedPoints = new three.BufferGeometry().setFromPoints( spacedPoints );
+
+  const material = new three.LineBasicMaterial({ color: new three.Color(0, 0, 1) });
+  const mesh = new three.Line(geometryPoints, material);
+  mesh.position.set(0, 0.05, 0);
+  mesh.rotation.set(Math.PI / 2, 0, 0);
+  return mesh;
+}
+
+/* TODO: For debugging the network loader. */
+function drawPolygon(points, params) {
+  const defaults = { closed: true, color: 'black', fill: 'none', markers: false };
+  params = Object.assign(defaults, params);
+
+  const func = params.closed ? 'polygon' : 'polyline';
+  const line = draw[func](points)
+    .translate(750, 750)
+    .scale(6, 0, 0)
+    .fill(params.fill)
+    .stroke({ width: 0.2, color: params.color });
+
+  const marker = draw.marker(5, 5, function(add) {
+    add.circle(5, 5).fill({ color: params.color }).stroke({ color: params.color });
+  });
+  if (params.markers) ['start', 'mid', 'end'].map(t => line.marker(t, marker))
 }
