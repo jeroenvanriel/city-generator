@@ -120,6 +120,21 @@ function drawPolygon(points, params) {
   if (params.markers) ['start', 'mid', 'end'].map(t => line.marker(t, marker))
 }
 
+export function drawSphere(scene, point, params) {
+  const defaults = { size: 1, color: 'green' };
+  params = Object.assign(defaults, params);
+
+  const geometry = new three.SphereGeometry(params.size, 10, 10);
+  const material = new three.MeshStandardMaterial({ color: params.color });
+  const mesh = new three.Mesh(geometry, material);
+  if (!point.z) { // Vector2
+    mesh.position.set(point.x, 0, point.y)
+  } else { // Vector3
+    mesh.position.copy(point);
+  }
+  scene.add(mesh);
+}
+
 export function union(clipper, polygons) {
   const inputs = _.map(polygons, (polygon) => ({ data: polygon, closed: true }));
   return clipper.clipToPaths({
