@@ -111,9 +111,6 @@ export function extrudeLine(line, offset=5) {
   line = asVector2List(line);
   const origin = new three.Vector2();
 
-  // draw points for debugging
-  // for (const p of line) { drawSphere(scene, p) };
-
   function offsetLine(p, q) {
     const v = new three.Vector2().subVectors(q, p);
     v.rotateAround(origin, -Math.PI / 2);
@@ -121,22 +118,12 @@ export function extrudeLine(line, offset=5) {
     return v;
   }
 
-  // first segment
-  let p = line[0];
-  let q = line[1];
-  let v = offsetLine(p, q);
-  let m1 = new three.Vector2().addVectors(p, v);
-  let n1 = new three.Vector2().addVectors(q, v);
-  v.multiplyScalar(-1); // flip for other side
-  let m2 = new three.Vector2().addVectors(p, v);
-  let n2 = new three.Vector2().addVectors(q, v);
+  // boundary points
+  const left = [];
+  const right = [];
 
-  // outer polygon points
-  const left = [m1];
-  const right = [m2];
-
-  let r1, s1, r2, s2;
-  for (let i = 1; i < line.length - 1; i++) {
+  let p, q, v, r1, s1, r2, s2, m1, n1, m2, n2;
+  for (let i = 0; i < line.length - 1; i++) {
     p = line[i];
     q = line[i + 1];
 
@@ -147,22 +134,23 @@ export function extrudeLine(line, offset=5) {
     r2 = new three.Vector2().addVectors(p, v);
     s2 = new three.Vector2().addVectors(q, v);
 
-    // compute intersection of lines m-n, r-s
-    const x1 = intersectionLines(m1, n1, r1, s1);
-    const x2 = intersectionLines(m2, n2, r2, s2);
-
-    left.push(x1);
-    right.push(x2);
+    if (i == 0) {
+      left.push(r1);
+      right.push(r2);
+    } else {
+      // compute intersection of lines m-n, r-s
+      const x1 = intersectionLines(m1, n1, r1, s1);
+      const x2 = intersectionLines(m2, n2, r2, s2);
+      left.push(x1);
+      right.push(x2);
+    }
     m1 = r1; n1 = s1;
     m2 = r2; n2 = s2;
   }
   left.push(s1)
   right.push(s2)
 
-  const points = [...left, ...right.reverse()];
-  // for (const p of points) { drawSphere(scene, p, { color: 'pink' }) };
-
-  return points;
+  return [...left, ...right.reverse()];
 }
 
 /** May be regarded an idempotent operator. */
