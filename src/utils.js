@@ -102,7 +102,7 @@ function lineToMesh(line_polygon) {
   return mesh;
 }
 
-/* For debugging the network loader. */
+/* TODO: For debugging the network loader. */
 function drawPolygon(points, params) {
   const defaults = { closed: true, color: 'black', fill: 'none', markers: false };
   params = Object.assign(defaults, params);
