@@ -14,10 +14,10 @@ import streetlamp from './models/street_lamp.glb';
 import { roadMaterial } from './material';
 
 
-const OBJECTS = [
-  { url: block1, scale: 5 },
-  { url: streetlamp, scale: 0.02 },
-]
+const OBJECTS = {
+  'block1': { url: block1, scale: 5 },
+  'streetlamp': { url: streetlamp, scale: 0.015 },
+}
 
 export function build(scene, clipper) {
     addEnvironment(scene, network.net);
@@ -29,7 +29,9 @@ export function build(scene, clipper) {
 
     _.forEach(holes, hole => buildRowHouses(scene, clipper, hole))
 
-    loadObjects(OBJECTS).then(r => console.log('loaded', r));
+    loadObjects(OBJECTS).then(r => {
+      placeStreetlamps(clipper, scene, road_polygon, r.streetlamp.obj.scene);
+    });
 }
 
 function loadObjects(objects) {
@@ -37,13 +39,13 @@ function loadObjects(objects) {
 
   return new Promise((resolve, reject) => {
 
-    const promises = objects.map(object =>
+    const promises = Object.entries(objects).map(([key, object]) =>
       new Promise((resolve, reject) => {
 
         // add the loaded mesh as property
         loader.loadAsync(object.url).then(obj => {
           object.obj = obj
-          resolve(object);
+          resolve([key, object]);
         }).catch(error => reject(error))
 
       })); 
@@ -52,7 +54,7 @@ function loadObjects(objects) {
     Promise.all(promises).then(loadedObjects => {
       const bb = new three.Box3();
 
-      _.forEach(loadedObjects, object => {
+      _.forEach(loadedObjects, ([key, object]) => {
         const obj = object.obj.scene;
         const s = object.scale;
         obj.scale.set(s, s, s);
@@ -64,7 +66,7 @@ function loadObjects(objects) {
         object.model_depth = bb.max.z - bb.min.z;
       })
 
-      resolve(loadedObjects);
+      resolve(Object.fromEntries(loadedObjects));
     }).catch(error => reject(error));
 
   })
@@ -160,11 +162,11 @@ function placeBuildings(road_polygon, block) {
   // scene.add(instancedMesh);
 }
 
-function placeStreetlamps(road_polygon, streetlamp) {
+function placeStreetlamps(clipper, scene, road_polygon, streetlamp) {
   const holes = road_polygon.slice(1);
   let points = [];
   for (let i = 0; i < holes.length; i++) {
-    points.push(...getPositionsAlongPolygon(holes[i], 2, 12));
+    points.push(...getPositionsAlongPolygon(clipper, holes[i], 2, 12));
   }
 
   const bb = new three.Box3();
@@ -180,7 +182,7 @@ function placeStreetlamps(road_polygon, streetlamp) {
     })
 }
 
-function getPositionsAlongPolygon(polygon, offset=10, count=15) { 
+function getPositionsAlongPolygon(clipper, polygon, offset=10, count=15) { 
   let r = fromClipper(offsetPolygon(clipper, toClipper(polygon), -offset * SCALE));
 
   // close the polygon
