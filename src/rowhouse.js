@@ -3,7 +3,9 @@ import { RowhouseGeometry } from './rowhouseGeometry';
 import { RowhouseRoofGeometry } from './rowhouseRoofGeometry.js';
 import { polygonToMesh, offsetPolygon, extrudeLine, toClipper, fromClipper, SCALE, getRandomInt, asVector2List } from './utils';
 
-import { red, blue } from './material.js';
+import { LoopSubdivision } from 'three-subdivide';
+
+import { red, displacementMaterial } from './material.js';
 
 export function buildRowHouses(scene, clipper, hole) {
   const sidewalkWidth = 5;
@@ -115,7 +117,24 @@ function buildHouse(scene, basePolygon, houseMidline) {
   const roofHeight = getRandomInt(4, 15);
 
   const geometry = new RowhouseGeometry(basePolygon, houseHeight);
-  const mesh = new three.Mesh(geometry, blue);
+
+  // subdivision for displacement map
+  const iterations = 4;
+  const params = {
+    split: false,
+    flatOnly: true,
+  }
+
+  const subdivided = LoopSubdivision.modify(geometry, iterations, params);
+
+  const wireframe = new three.WireframeGeometry(subdivided);
+  const line = new three.LineSegments(wireframe);
+  line.material.depthTest = false;
+  line.material.opacity = 0.75;
+  line.material.transparent = true
+  scene.add(line)
+
+  const mesh = new three.Mesh(subdivided, displacementMaterial);
   scene.add( mesh );
 
   const roofGeometry = new RowhouseRoofGeometry(basePolygon, houseMidline, roofHeight);

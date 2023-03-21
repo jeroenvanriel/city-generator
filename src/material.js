@@ -3,6 +3,8 @@ import * as three from 'three';
 import asphaltImage from './textures/asphalt.png';
 import grassImage from './textures/grass.jpg';
 
+import displacementImage from './textures/displacement.png';
+
 const textureLoader = new three.TextureLoader();
 
 const loadRepeatedTexture = (url) =>
@@ -39,3 +41,11 @@ export const landMaterial = new three.MeshPhysicalMaterial({
 export const red = new three.MeshStandardMaterial({ color: 'red', side: three.DoubleSide });
 export const green = new three.MeshStandardMaterial({ color: 'green', side: three.DoubleSide });
 export const blue = new three.MeshStandardMaterial({ color: 'blue', side: three.DoubleSide });
+
+const displacementTexture = loadRepeatedTexture(displacementImage);
+
+export const displacementMaterial = new three.MeshStandardMaterial({
+  displacementMap: displacementTexture,
+  displacementScale: 1,
+  map: displacementTexture,
+});
