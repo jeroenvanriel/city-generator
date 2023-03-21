@@ -58,7 +58,10 @@ export const brickMaterial = new three.MeshStandardMaterial({
 import concreteImage from './textures/concrete.jpg';
 const concreteTexture = loadRepeatedTexture(concreteImage);
 concreteTexture.repeat.set(0.05, 0.05);
-export const concreteMaterial = new three.MeshStandardMaterial({ map: concreteTexture });
+export const concreteMaterial = new three.MeshStandardMaterial({
+  map: concreteTexture,
+  metalness: 0.5,
+});
 
 // roof
 
