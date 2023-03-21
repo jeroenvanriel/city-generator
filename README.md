@@ -2,6 +2,8 @@
 
 ![current screenshot](screenshot.png)
 
+![rowhouses](screenshot-row-houses.png)
+
 ## Network loading
 We load the network from a SUMO network file, which lists road edges and their lanes.
 Each lane and junction is encoded as a polygons (lists of coordinates).
@@ -28,8 +30,8 @@ These building blocks have been modelled in Blender.
 - [x] road textures
 - [x] land mesh
 - [ ] dashed lines between lanes (maybe using three.Curve.getSpacedPoints())
-- [ ] skybox
+- [x] skybox
 - [ ] anti-aliasing
 - [x] save/load camera position on reload
 - [ ] add random trees
-- [ ] add regularly positioned street lights
+- [x] add regularly positioned street lights
