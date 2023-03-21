@@ -44,6 +44,23 @@ export function gaussianRandom(start, end) {
   return Math.floor(start + gaussianRand() * (end - start + 1));
 }
 
+/** Sample from density defined by image. */
+export function sampleFromImage(image) {
+
+}
+
+/** Fisher-Yates shuffle (from https://stackoverflow.com/questions/11935175/sampling-a-random-subset-from-an-array). */
+export function getRandomSubarray(arr, size) {
+    var shuffled = arr.slice(0), i = arr.length, temp, index;
+    while (i--) {
+        index = Math.floor((i + 1) * Math.random());
+        temp = shuffled[index];
+        shuffled[index] = shuffled[i];
+        shuffled[i] = temp;
+    }
+    return shuffled.slice(0, size);
+}
+
 /** Generate three.Shape from polygon, given as a list [outer, hole, hole, ..., hole].  */
 export function polygonToShape(polygon, closed=false) {
   let outer = [];

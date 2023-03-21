@@ -6,16 +6,16 @@ import { grid } from './grid'
 import { buildRowHouses } from './rowhouse.js';
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE, polygonToShape } from './utils';
+import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE, polygonToShape, getRandomSubarray } from './utils';
 
-import network from './networks/real1.net.xml';
+import network from './networks/real2.net.xml';
 import block1 from './models/block_grey.glb';
 import streetlamp from './models/street_lamp.glb';
-import { roadMaterial } from './material';
+import { roadMaterial, concreteMaterial } from './material';
 
 
 const OBJECTS = {
-  'block1': { url: block1, scale: 5 },
+  'block1': { url: block1, scale: 10 },
   'streetlamp': { url: streetlamp, scale: 0.015 },
 }
 
@@ -27,10 +27,25 @@ export function build(scene, clipper) {
     
     const holes = road_polygon.slice(1);
 
-    _.forEach(holes, hole => buildRowHouses(scene, clipper, hole))
+    const sidewalkWidth = 5;
+    const businessHoles = getRandomSubarray(holes, 5);
 
     loadObjects(OBJECTS).then(r => {
       placeStreetlamps(clipper, scene, road_polygon, r.streetlamp.obj.scene);
+
+      _.forEach(holes, hole => {
+        const sidewalkInner = fromClipper(offsetPolygon(clipper, toClipper(hole), - sidewalkWidth * SCALE));
+
+        // draw sidewalks
+        scene.add(polygonToMesh([hole, sidewalkInner], concreteMaterial));
+
+        if (businessHoles.includes(hole)) {
+          placeGridBuildings(clipper, scene, sidewalkInner, r.block1);
+        }
+        else {
+          buildRowHouses(scene, clipper, hole);
+        }
+      })
     });
 }
 
@@ -91,8 +106,8 @@ function drawRoad(scene, road_polygon, side_line_polygons, between_line_polygons
     });
 }
 
-function placeGridBuildings(hole, block) {
-  const cells = grid(clipper, hole);
+function placeGridBuildings(clipper, scene, hole, block) {
+  const cells = grid(clipper, hole, block.model_width, block.model_depth);
 
   const group = new three.Group;
   for (let x = 0; x < cells.length; x++) {
@@ -102,17 +117,17 @@ function placeGridBuildings(hole, block) {
 
       const levels = getRandomInt(1, 4);
       for (let l = 0; l < levels; l++) {
-        const cube = block.clone();
+        const cube = block.obj.scene.clone();
 
         // TODO: fix (i.e., center) the exact grid position w.r.t. to hole polygon
         cube.position.add(new three.Vector3(
-          poly[0][0] + 5,
-          l * model_height,
-          poly[0][1] + 5,
+          poly[0][0] + block.model_height / 2,
+          l * block.model_height,
+          poly[0][1] + block.model_depth / 2,
         ))
 
         // TODO: fix this in the block model itself
-        cube.position.add(new three.Vector3(0, model_height / 2, 0));
+        cube.position.add(new three.Vector3(0, block.model_height / 2, 0));
         group.add(cube);
       }
     }

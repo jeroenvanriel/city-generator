@@ -1,15 +1,13 @@
 import * as three from 'three';
 import { difference, toClipper } from './utils';
 
-export function grid(clipper, polygon) {
+export function grid(clipper, polygon, gridLength, gridWidth) {
     // compute bounding box of the polygon
     const bb = new three.Box2();
     bb.setFromPoints(polygon.map(p => new three.Vector2(p[0], p[1])));
     let xMin = bb.min.x, xMax = bb.max.x,
         zMin = bb.min.y, zMax = bb.max.y;
     
-    const gridLength = 10; //should be length of building
-    const gridWidth = 10;  //should be width of building
     const xDifForGrid = Math.ceil((xMax - xMin) / gridLength);
     const zDifForGrid = Math.ceil((zMax - zMin) / gridWidth);
 
