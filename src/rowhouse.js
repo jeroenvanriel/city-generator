@@ -1,7 +1,7 @@
 import * as three from 'three';
 import { RowhouseGeometry } from './rowhouseGeometry';
 import { RowhouseRoofGeometry } from './rowhouseRoofGeometry.js';
-import { polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE, extrudePolyline, asVector2List, polygonToShape, randomUniform, getRandomInt } from './utils';
+import { polygonToMesh, offsetPolygon, extrudeLine, toClipper, fromClipper, SCALE, getRandomInt, asVector2List } from './utils';
 
 import { red, blue } from './material.js';
 
@@ -19,16 +19,12 @@ export function buildRowHouses(scene, clipper, hole) {
   const segments = getSegments(innerPolygon);
   const houseLines = cutSegments(segments)
 
-  for (const segment of houseLines) {
-    const houseDepth = getRandomInt(8, 14);
+  for (const line of houseLines) {
+    const houseDepth = getRandomInt(8, 10);
 
-    const basePolygon = fromClipper(extrudePolyline(clipper, toClipper(segment), houseDepth * SCALE));
-    basePolygon.push(basePolygon[0]); // close it
+    const basePolygon = extrudeLine(line, houseDepth);
 
-    buildHouse(scene,
-      asVector2List(basePolygon),
-      asVector2List(segment)
-    )
+    buildHouse(scene, basePolygon, line);
   }
 }
 
@@ -106,15 +102,23 @@ function cutSegments(segments) {
   return lines;
 }
 
-function buildHouse(scene, basePoints, houseMidline) {
+function buildHouse(scene, basePolygon, houseMidline) {
+  basePolygon = asVector2List(basePolygon);
+  houseMidline = asVector2List(houseMidline);
+
+  // close the polygon if necessary
+  if (!basePolygon.at(-1).equals(basePolygon[0])) {
+    basePolygon.push(basePolygon[0]);
+  }
+
   const houseHeight = getRandomInt(8, 20);
   const roofHeight = getRandomInt(4, 15);
 
-  const geometry = new RowhouseGeometry(basePoints, houseHeight);
+  const geometry = new RowhouseGeometry(basePolygon, houseHeight);
   const mesh = new three.Mesh(geometry, blue);
   scene.add( mesh );
 
-  const roofGeometry = new RowhouseRoofGeometry(basePoints, houseMidline, roofHeight);
+  const roofGeometry = new RowhouseRoofGeometry(basePolygon, houseMidline, roofHeight);
   const roofMesh = new three.Mesh(roofGeometry, red);
   roofMesh.translateY(houseHeight);
   scene.add(roofMesh);

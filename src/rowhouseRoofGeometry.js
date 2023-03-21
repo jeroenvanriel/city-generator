@@ -2,7 +2,7 @@ import { BufferGeometry, Float32BufferAttribute } from 'three';
 
 class RowhouseRoofGeometry extends BufferGeometry {
 
-	constructor( polygon, midline, height ) {
+	constructor(polygon, midline, height) {
 		super();
 
 		this.type = 'RowhouseRoofGeometry';
@@ -28,13 +28,20 @@ class RowhouseRoofGeometry extends BufferGeometry {
             }
 
             const p = polygon[0];
-            let mxPrev = getNearest(p);
+            let mxPrev = 0;
             vertices.push( p.x, 0, p.y );
 
 			for (let i = 1; i < polygon.length; i++) {
 				const p = polygon[i];
+                let mx;
                 // find the index of nearest midline point
-                const mx = getNearest(p);
+                if (i < midline.length) {
+                    mx = i; // left side
+                } else if (i == polygon.length - 1) {
+                    mx = 0; // first point again (assume closed polygon)
+                } else { // right side
+                    mx = 2 * midline.length - i - 1;
+                }
 				vertices.push( p.x, 0, p.y );
 
 				// faces
@@ -49,20 +56,6 @@ class RowhouseRoofGeometry extends BufferGeometry {
                 mxPrev = mx; 
 			}
 		}
-
-        function getNearest(p) {
-            // TODO: make this efficient (just brute-force search now)
-            let nearest;
-            let min = 10000;
-            for (let i = 0; i < midline.length; i++) {
-                const dist = midline[i].distanceTo(p);
-                if (dist < min) {
-                    nearest = i;
-                    min = dist;
-                }
-            }
-            return nearest;
-        }
 
 	}
 
