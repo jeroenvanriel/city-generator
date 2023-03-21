@@ -48,3 +48,10 @@ import brickImage from './textures/brick.jpg';
 const brickTexture = loadRepeatedTexture(brickImage);
 brickTexture.repeat.set(0.1, 0.1);
 export const brickMaterial = new three.MeshStandardMaterial({ map: brickTexture });
+
+//concrete
+
+import concreteImage from './textures/concrete.jpg';
+const concreteTexture = loadRepeatedTexture(concreteImage);
+concreteTexture.repeat.set(0.1, 0.1);
+export const concreteMaterial = new three.MeshStandardMaterial({ map: concreteTexture });

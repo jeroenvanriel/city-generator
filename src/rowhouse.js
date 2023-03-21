@@ -3,7 +3,7 @@ import { RowhouseGeometry } from './rowhouseGeometry';
 import { RowhouseRoofGeometry } from './rowhouseRoofGeometry.js';
 import { polygonToMesh, offsetPolygon, extrudeLine, toClipper, fromClipper, SCALE, getRandomInt, asVector2List } from './utils';
 
-import { red, brickMaterial } from './material.js';
+import { red, brickMaterial, concreteMaterial } from './material.js';
 
 export function buildRowHouses(scene, clipper, hole) {
   const sidewalkWidth = 5;
@@ -12,7 +12,7 @@ export function buildRowHouses(scene, clipper, hole) {
   const sidewalkInner = fromClipper(offsetPolygon(clipper, toClipper(hole), - sidewalkWidth * SCALE));
 
   // draw sidewalks
-  scene.add(polygonToMesh([hole, sidewalkInner], red));
+  scene.add(polygonToMesh([hole, sidewalkInner], concreteMaterial));
 
   // get row house segments (polylines)
   const innerPolygon = fromClipper(offsetPolygon(clipper, toClipper(hole), - (houseOffset) * SCALE));
