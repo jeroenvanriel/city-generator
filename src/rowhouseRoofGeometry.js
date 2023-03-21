@@ -7,6 +7,9 @@ class RowhouseRoofGeometry extends BufferGeometry {
 
 		this.type = 'RowhouseRoofGeometry';
 
+		this.midline = midline;
+		this.height = height;
+
 		// buffer
 		const vertices = [];
 		const indices = [];
@@ -57,6 +60,10 @@ class RowhouseRoofGeometry extends BufferGeometry {
 			}
 		}
 
+	}
+
+	clone() {
+		return new this.constructor(this.midline, this.height).copy(this);
 	}
 
 }

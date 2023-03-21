@@ -7,9 +7,13 @@ class RowhouseGeometry extends BufferGeometry {
 
 		this.type = 'RowhouseGeometry';
 
+		this.points = points;
+		this.height = height;
+
 		// buffer
 		const vertices = [];
 		const indices = [];
+		const uvs = [];
 
 		// create buffer data
 		generateBufferData();
@@ -18,6 +22,7 @@ class RowhouseGeometry extends BufferGeometry {
 		// build geometry
 		this.setIndex( indices );
 		this.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
+		this.setAttribute( 'uv', new Float32BufferAttribute( uvs, 2));
 		this.computeVertexNormals();
 
 		// functions
@@ -31,6 +36,11 @@ class RowhouseGeometry extends BufferGeometry {
 				vertices.push( p.x, height, p.y );
 				vertices.push( r.x, height, r.y );
 				vertices.push( r.x, 0, r.y );
+
+				uvs.push(0, 0)
+				uvs.push(0, 1)
+				uvs.push(1, 1)
+				uvs.push(1, 0)
 			}
 		}
 
@@ -46,6 +56,11 @@ class RowhouseGeometry extends BufferGeometry {
 				indices.push( b, c, d );
 			}
 		}
+	}
+
+	clone() {
+		// pass parameters
+		return new this.constructor(this.points, this.height).copy(this);
 	}
 
 }
