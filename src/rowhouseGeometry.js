@@ -37,10 +37,11 @@ class RowhouseGeometry extends BufferGeometry {
 				vertices.push( r.x, height, r.y );
 				vertices.push( r.x, 0, r.y );
 
+				const width = Math.sqrt( (r.x - p.x) * (r.x - p.x) + (r.y - p.y) * (r.y - p.y) );
 				uvs.push(0, 0)
-				uvs.push(0, 1)
-				uvs.push(1, 1)
-				uvs.push(1, 0)
+				uvs.push(0, height)
+				uvs.push(width, height)
+				uvs.push(width, 0)
 			}
 		}
 
