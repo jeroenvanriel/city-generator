@@ -3,7 +3,7 @@ import { RowhouseGeometry } from './rowhouseGeometry';
 import { RowhouseRoofGeometry } from './rowhouseRoofGeometry.js';
 import { polygonToMesh, offsetPolygon, extrudeLine, toClipper, fromClipper, SCALE, getRandomInt, asVector2List } from './utils';
 
-import { red, brickMaterial, concreteMaterial } from './material.js';
+import { red, brickMaterial, concreteMaterial, roofMaterial } from './material.js';
 
 export function buildRowHouses(scene, clipper, hole) {
   const sidewalkWidth = 5;
@@ -21,8 +21,9 @@ export function buildRowHouses(scene, clipper, hole) {
 
   for (const line of houseLines) {
     const houseDepth = getRandomInt(8, 10);
+    const houseEndDepth = 5;
 
-    const basePolygon = extrudeLine(line, houseDepth);
+    const basePolygon = extrudeLine(line, houseDepth, houseEndDepth);
 
     buildHouse(scene, basePolygon, line);
   }
@@ -119,7 +120,7 @@ function buildHouse(scene, basePolygon, houseMidline) {
   scene.add( mesh );
 
   const roofGeometry = new RowhouseRoofGeometry(basePolygon, houseMidline, roofHeight);
-  const roofMesh = new three.Mesh(roofGeometry, brickMaterial);
+  const roofMesh = new three.Mesh(roofGeometry, roofMaterial);
   roofMesh.translateY(houseHeight);
   scene.add(roofMesh);
 }

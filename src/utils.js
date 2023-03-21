@@ -107,7 +107,7 @@ export function intersectionLines(p1, p2, p3, p4) {
 }
 
 /** Takes list of three.Vector2 and outputs three.Shape. */
-export function extrudeLine(line, offset=5) {
+export function extrudeLine(line, offset=5, endOffset=0) {
   line = asVector2List(line);
   const origin = new three.Vector2();
 
@@ -133,6 +133,11 @@ export function extrudeLine(line, offset=5) {
     v.multiplyScalar(-1); // flip for other side
     r2 = new three.Vector2().addVectors(p, v);
     s2 = new three.Vector2().addVectors(q, v);
+
+    // offset in longitudal direction
+    const w = new three.Vector2().subVectors(q, p).normalize().multiplyScalar(endOffset);
+    r1.sub(w); r2.sub(w);
+    s1.add(w); s2.add(w);
 
     if (i == 0) {
       left.push(r1);
