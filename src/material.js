@@ -46,12 +46,19 @@ export const landMaterial = new three.MeshPhysicalMaterial({
 
 import brickImage from './textures/brick.jpg';
 const brickTexture = loadRepeatedTexture(brickImage);
-brickTexture.repeat.set(0.1, 0.1);
+brickTexture.repeat.set(0.08, 0.08);
 export const brickMaterial = new three.MeshStandardMaterial({ map: brickTexture });
 
-//concrete
+// concrete
 
 import concreteImage from './textures/concrete.jpg';
 const concreteTexture = loadRepeatedTexture(concreteImage);
-concreteTexture.repeat.set(0.1, 0.1);
+concreteTexture.repeat.set(0.05, 0.05);
 export const concreteMaterial = new three.MeshStandardMaterial({ map: concreteTexture });
+
+// roof
+
+import roofImage from './textures/roof.jpg';
+const roofTexture = loadRepeatedTexture(roofImage);
+roofTexture.repeat.set(0.025, 0.05);
+export const roofMaterial = new three.MeshStandardMaterial({ map: roofTexture });
