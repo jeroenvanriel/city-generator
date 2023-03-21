@@ -15,8 +15,8 @@ import { roadMaterial } from './material';
 
 
 const OBJECTS = [
-  { obj: block1, scale: 5 },
-  { obj: streetlamp, scale: 0.02 },
+  { url: block1, scale: 5 },
+  { url: streetlamp, scale: 0.02 },
 ]
 
 export function build(scene, clipper) {
@@ -41,8 +41,8 @@ function loadObjects(objects) {
       new Promise((resolve, reject) => {
 
         // add the loaded mesh as property
-        loader.loadAsync(object.obj).then(obj => {
-          object.loaded = obj
+        loader.loadAsync(object.url).then(obj => {
+          object.obj = obj
           resolve(object);
         }).catch(error => reject(error))
 
@@ -53,7 +53,7 @@ function loadObjects(objects) {
       const bb = new three.Box3();
 
       _.forEach(loadedObjects, object => {
-        const obj = object.loaded.scene;
+        const obj = object.obj.scene;
         const s = object.scale;
         obj.scale.set(s, s, s);
 
