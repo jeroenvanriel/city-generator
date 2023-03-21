@@ -153,10 +153,23 @@ export function extrudeLine(line, offset=5) {
   return [...left, ...right.reverse()];
 }
 
+export function asVector2(p) {
+  if (p.x && p.y) return p;
+  return new three.Vector2(p[0], p[1]);
+}
+
 /** May be regarded an idempotent operator. */
 export function asVector2List(polygon) {
   if (polygon[0].x && polygon[0].y) return polygon;
   return polygon.map(p => new three.Vector2(p[0], p[1]));
+}
+
+export function distance(p, q) {
+  if (! p.x) { p = new three.Vector2(p[0], p[1]); }
+  if (! q.x) { q = new three.Vector2(q[0], q[1]); }
+  const xdif = Math.abs(q.x - p.x);
+  const ydif = Math.abs(q.y - p.y);
+  return Math.sqrt( xdif*xdif +  ydif*ydif );
 }
 
 export function union(clipper, polygons) {

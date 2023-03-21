@@ -119,7 +119,7 @@ function buildHouse(scene, basePolygon, houseMidline) {
   scene.add( mesh );
 
   const roofGeometry = new RowhouseRoofGeometry(basePolygon, houseMidline, roofHeight);
-  const roofMesh = new three.Mesh(roofGeometry, red);
+  const roofMesh = new three.Mesh(roofGeometry, brickMaterial);
   roofMesh.translateY(houseHeight);
   scene.add(roofMesh);
 }
