@@ -31,7 +31,7 @@ export function build(scene, clipper) {
     const businessHoles = getRandomSubarray(holes, 5);
 
     loadObjects(OBJECTS).then(r => {
-      placeStreetlamps(clipper, scene, road_polygon, r.streetlamp.obj.scene);
+      placeStreetlamps(clipper, scene, road_polygon, r.streetlamp);
 
       _.forEach(holes, hole => {
         const sidewalkInner = fromClipper(offsetPolygon(clipper, toClipper(hole), - sidewalkWidth * SCALE));
@@ -184,13 +184,9 @@ function placeStreetlamps(clipper, scene, road_polygon, streetlamp) {
     points.push(...getPositionsAlongPolygon(clipper, holes[i], 2, 12));
   }
 
-  const bb = new three.Box3();
-  bb.setFromObject(streetlamp);
-  const model_height = bb.max.y - bb.min.y;
-
   _.forEach(points, point => {
-      const lamp = streetlamp.clone();
-      lamp.position.add(new three.Vector3(point.x, model_height/2, point.y));
+      const lamp = streetlamp.obj.scene.clone();
+      lamp.position.add(new three.Vector3(point.x, streetlamp.model_height/2, point.y));
       //const lamp_light = new three.PointLight(0xffff66, 1, 5);
       //lamp_light.position.add(new three.Vector3(point.x, model_height, point.y))
       scene.add(lamp);
