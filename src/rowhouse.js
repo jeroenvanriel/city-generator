@@ -111,6 +111,7 @@ function buildHouse(scene, basePolygon, houseMidline) {
 
   const geometry = new RowhouseGeometry(basePolygon, houseHeight);
   const mesh = new three.Mesh(geometry, brickMaterial);
+  mesh.castShadow = true;
   scene.add( mesh );
 
   const roofGeometry = new RowhouseRoofGeometry(basePolygon, houseMidline, roofHeight);

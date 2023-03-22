@@ -37,3 +37,31 @@ function addLandMesh(scene, bounds) {
 
   scene.add(bgMesh);
 }
+
+function addLight(scene, bounds) {
+  const [left, bottom, right, top] = bounds;
+
+  const centerX = (right - left);
+  const centerY = (top - bottom);
+
+  const light = new three.AmbientLight(0x404040);
+  scene.add(light);
+
+  const directionalLight = new three.DirectionalLight(0xffffff, 1);
+  directionalLight.position.set(centerX, 2000, centerY);
+  directionalLight.target.position.set(0, 0, 0);
+  directionalLight.castShadow = true;
+  scene.add(directionalLight);
+
+  const shadow = directionalLight.shadow;
+  shadow.bias = -0.0001;
+  shadow.mapSize.setX(16384);
+  shadow.mapSize.setY(16384);
+  shadow.radius = 5;
+  shadow.camera.bottom = -2000;
+  shadow.camera.top = 1000
+  shadow.camera.left = -1000;
+  shadow.camera.right = 1000;
+  shadow.camera.near = 50;
+  shadow.camera.far = 10000;
+}

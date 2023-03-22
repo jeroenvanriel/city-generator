@@ -125,6 +125,8 @@ function placeGridBuildings(clipper, scene, hole, block) {
       const levels = getRandomInt(1, 4);
       for (let l = 0; l < levels; l++) {
         const cube = block.obj.scene.clone();
+        // TODO: traverse children
+        _.forEach(cube.children[0].children, child => { child.castShadow = true });
 
         // TODO: fix (i.e., center) the exact grid position w.r.t. to hole polygon
         cube.position.add(new three.Vector3(
