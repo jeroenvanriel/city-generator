@@ -131,3 +131,15 @@ export function loadNetwork(net, clipper) {
     )
   ]
 }
+
+export function getBounds(net, padding=0) {
+  let [left, bottom, right, top] = net.location[0].$.convBoundary.split(',').map(Number);
+
+  // SUMO has flipped y-coords
+  bottom = -bottom; top = -top;
+  
+  top -= padding; bottom += padding;
+  left-= padding; right += padding;
+
+  return [left, bottom, right, top];
+}
