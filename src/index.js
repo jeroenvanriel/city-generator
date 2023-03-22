@@ -4,7 +4,7 @@ import './style.css';
 import Controls from './controls';
 import { build } from './build';
 
-import { EffectComposer, RenderPass, EffectPass, SMAAEffect, DepthOfFieldEffect } from 'postprocessing';
+import { EffectComposer, RenderPass, EffectPass, DepthOfFieldEffect } from 'postprocessing';
 
 import * as clipperLib from 'js-angusj-clipper/web';
 
@@ -52,7 +52,6 @@ const depthOfFieldEffect = new DepthOfFieldEffect(camera, {
 composer.addPass(new EffectPass(
   camera,
   depthOfFieldEffect,
-  new SMAAEffect(),
 ));
 
 function animate() {
