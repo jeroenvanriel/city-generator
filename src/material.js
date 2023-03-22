@@ -73,3 +73,8 @@ export const roofMaterial = new three.MeshStandardMaterial({
   metalness: 0.5,
   roughness: 0.8,
 });
+
+// density image example
+
+import densityImage from './textures/density.png';
+export const densityTexture = textureLoader.load(densityImage);
