@@ -45,8 +45,44 @@ export function gaussianRandom(start, end) {
 }
 
 /** Sample from density defined by image. */
-export function sampleFromImage(image) {
+export function sampleFromImage(image, N=1) {
+  var canvas = document.createElement("canvas");
+  canvas.width = image.width;
+  canvas.height = image.height;
+  var ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(image, 0, 0);
 
+  let totalR = 0;
+  for (let x = 0; x < image.width; x++) {
+    for (let y = 0; y < image.height; y++) {
+      const p = ctx.getImageData(x, y, 1, 1).data;
+      totalR += p[0]; // total R pixel intensity
+    }
+  }
+
+  const rs = _.times(N, () => randomUniform(0, totalR));
+  rs.sort((a, b) => a - b); // sorting floats
+
+  const points = [];
+  let prevR = 0;
+  let currentR = 0;
+  let i = 0;
+  for (let x = 0; x < image.width; x++) {
+    for (let y = 0; y < image.height; y++) {
+      const p = ctx.getImageData(x, y, 1, 1).data;
+      currentR += p[0];
+
+      while (prevR <= rs[i] && rs[i] <= currentR) {
+        points.push([x, image.height - 1 - y]);
+        i += 1;
+        if (i >= N) {
+          return points
+        }; 
+      }
+
+      prevR = currentR;
+    }
+  }
 }
 
 /** Fisher-Yates shuffle (from https://stackoverflow.com/questions/11935175/sampling-a-random-subset-from-an-array). */

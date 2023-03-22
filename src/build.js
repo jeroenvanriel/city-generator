@@ -1,22 +1,25 @@
 import * as three from 'three';
 
-import { loadNetwork } from './network.js';
+import { loadNetwork, getBounds } from './network.js';
 import { addEnvironment } from './environment';
 import { grid } from './grid'
 import { buildRowHouses } from './rowhouse.js';
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE, polygonToShape, getRandomSubarray } from './utils';
+import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE, polygonToShape, getRandomSubarray, sampleFromImage } from './utils';
 
 import network from './networks/real2.net.xml';
 import block1 from './models/block_grey.glb';
 import streetlamp from './models/street_lamp.glb';
-import { roadMaterial, concreteMaterial } from './material';
+import tree from './models/tree1.glb';
+
+import { roadMaterial, concreteMaterial, densityTexture } from './material';
 
 
 const OBJECTS = {
   'block1': { url: block1, scale: 10 },
   'streetlamp': { url: streetlamp, scale: 0.015 },
+  'tree': { url: tree, scale: 3.5 },
 }
 
 export function build(scene, clipper) {
@@ -24,6 +27,8 @@ export function build(scene, clipper) {
 
     const [ road_polygon, side_line_polygons, between_line_polygons ] = loadNetwork(network.net, clipper)
     drawRoad(scene, road_polygon, side_line_polygons, between_line_polygons);
+
+    placeFromImage(scene, getBounds(network.net), densityTexture.image, r.tree)
     
     const holes = road_polygon.slice(1);
 
@@ -201,4 +206,33 @@ function getPositionsAlongPolygon(clipper, polygon, offset=10, count=15) {
 
   const shape = polygonToShape([r]);
   return shape.getSpacedPoints(count);
+}
+
+function placeFromImage(scene, bounds, image, object, N=1000) {
+  const [left, bottom, right, top] = bounds;
+
+  // TODO: traverse all children independent of the model
+  const tree = object.obj.scene.children[0];
+  const leaves = object.obj.scene.children[1];
+  const meshes = [
+    new three.InstancedMesh(tree.geometry, tree.material, N),
+    new three.InstancedMesh(leaves.geometry, leaves.material, N)
+  ];
+  const dummy = new three.Object3D();
+
+  const points = sampleFromImage(image, N);
+
+  for (let i = 0; i < points.length; i++) {
+    dummy.position.set(
+      points[i][0] / image.width * (right - left),
+      0,
+      points[i][1] / image.height * (top - bottom)
+    );
+    dummy.updateMatrix();
+    _.forEach(meshes, mesh => mesh.setMatrixAt(i, dummy.matrix))
+  }
+
+  const mesh = new three.Group();
+  mesh.add(...meshes);
+  scene.add(mesh);
 }
