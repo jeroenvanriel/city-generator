@@ -35,3 +35,4 @@ These building blocks have been modelled in Blender.
 - [x] save/load camera position on reload
 - [x] add random trees with density map
 - [x] add regularly positioned street lights
+- [ ] fix shadows around houses (small gaps) by using a fake shadow
