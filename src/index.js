@@ -17,7 +17,7 @@ const clipper = await clipperLib.loadNativeClipperLibInstanceAsync(
 const renderer = new three.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputEncoding = three.sRGBEncoding;
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = false;
 renderer.shadowMap.type = three.PCFShadowMap; //THREE.BasicShadowMap | THREE.PCFShadowMap |  THREE.VSMShadowMap | THREE.PCFSoftShadowMap
 
 document.body.appendChild(renderer.domElement);
