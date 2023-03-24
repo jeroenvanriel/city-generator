@@ -31,7 +31,8 @@ These building blocks have been modelled in Blender.
 - [x] land mesh
 - [ ] dashed lines between lanes (maybe using three.Curve.getSpacedPoints())
 - [x] skybox
-- [ ] anti-aliasing
+- [x] anti-aliasing
 - [x] save/load camera position on reload
-- [ ] add random trees
+- [x] add random trees with density map
 - [x] add regularly positioned street lights
+- [ ] fix shadows around houses (small gaps) by using a fake shadow
