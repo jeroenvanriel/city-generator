@@ -10,9 +10,9 @@ import skybox5 from './textures/sky/TropicalSunnyDayFront2048.png';
 import skybox6 from './textures/sky/TropicalSunnyDayBack2048.png';
 import { getBounds } from './network';
 
-export function addEnvironment(scene, net) {
+export function addEnvironment(scene, net, roadDepth) {
   addSkybox(scene);
-  addLandMesh(scene, getBounds(net, 10000));
+  addLandMesh(scene, getBounds(net, 10000), roadDepth);
   addLight(scene, getBounds(net, 10));
   scene.fog = new three.Fog(0xcccccc, 400, 1800);
 }
@@ -24,7 +24,7 @@ function addSkybox(scene) {
   return scene.background;
 }
 
-function addLandMesh(scene, bounds) {
+function addLandMesh(scene, bounds, roadDepth) {
   const [left, bottom, right, top] = bounds;
 
   const shape = new three.Shape([[left, top], [right, top], [right, bottom], [left, bottom]].map(([x, y]) => new three.Vector2(x, y)))
@@ -33,6 +33,7 @@ function addLandMesh(scene, bounds) {
   const bgMesh = new three.Mesh(new three.ShapeGeometry(shape), landMaterial)
   bgMesh.material.side = three.DoubleSide; // visible from above and below.
   bgMesh.geometry.rotateX(Math.PI / 2);
+  bgMesh.translateY(-roadDepth);
   bgMesh.receiveShadow = true;
 
   scene.add(bgMesh);

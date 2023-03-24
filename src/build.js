@@ -6,7 +6,7 @@ import { grid } from './grid'
 import { buildRowHouses } from './rowhouse.js';
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE, polygonToShape, getRandomSubarray, sampleFromImage } from './utils';
+import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE, polygonToShape, getRandomSubarray, sampleFromImage, asVector2List } from './utils';
 
 import network from './networks/real2.net.xml';
 import block1 from './models/block1.glb';
@@ -15,6 +15,7 @@ import streetlamp from './models/street_lamp.glb';
 import tree from './models/tree1.glb';
 
 import { roadMaterial, concreteMaterial, densityTexture } from './material';
+import { RowhouseGeometry } from './rowhouseGeometry.js';
 
 
 const OBJECTS = {
@@ -25,10 +26,12 @@ const OBJECTS = {
 }
 
 export function build(scene, clipper) {
-    addEnvironment(scene, network.net);
+    const holeHeight = 1;
+
+    addEnvironment(scene, network.net, holeHeight);
 
     const [ road_polygon, side_line_polygons, between_line_polygons ] = loadNetwork(network.net, clipper)
-    drawRoad(scene, road_polygon, side_line_polygons, between_line_polygons);
+    drawRoad(scene, road_polygon, side_line_polygons, between_line_polygons, holeHeight);
     
     const holes = road_polygon.slice(1);
 
@@ -43,8 +46,7 @@ export function build(scene, clipper) {
       _.forEach(holes, hole => {
         const sidewalkInner = fromClipper(offsetPolygon(clipper, toClipper(hole), - sidewalkWidth * SCALE));
 
-        // draw sidewalks
-        scene.add(polygonToMesh([hole, sidewalkInner], concreteMaterial));
+        drawHoleMesh(scene, hole, sidewalkInner);
 
         if (businessHoles.includes(hole)) {
           placeGridBuildings(clipper, scene, sidewalkInner, r.block_grey);
@@ -94,21 +96,22 @@ function loadObjects(objects) {
   })
 }
 
-function drawRoad(scene, road_polygon, side_line_polygons, between_line_polygons) {
+function drawRoad(scene, road_polygon, side_line_polygons, between_line_polygons, roadDepth) {
     const road_mesh = polygonToMesh(road_polygon, roadMaterial);
+    road_mesh.translateZ(roadDepth);
     scene.add(road_mesh);
 
     const line_material = new three.MeshStandardMaterial( { color: 0xffffff } );
     const side_lines = side_line_polygons.map(p => polygonToMesh(p, line_material));
     _.forEach(side_lines, line => {
-      line.translateZ(-0.01); // to prevent intersection
+      line.translateZ(roadDepth - 0.01); // small value to avoid collision
       scene.add(line);
     });
 
     // TODO: make these dashed
     const between_lines = between_line_polygons.map(p => polygonToMesh(p, line_material));
     _.forEach(between_lines, line => {
-      line.translateZ(-0.01); // to prevent intersection
+      line.translateZ(roadDepth - 0.01); // small value to avoid collision
       scene.add(line);
     });
 }
@@ -239,4 +242,20 @@ function placeFromImage(scene, bounds, image, object, N=1000) {
   const mesh = new three.Group();
   mesh.add(...meshes);
   scene.add(mesh);
+}
+
+function drawHoleMesh(scene, hole, sidewalkInner, holeHeight=1) {
+  const sidewalkMesh = polygonToMesh([hole, sidewalkInner], concreteMaterial);
+  scene.add(sidewalkMesh);
+
+  const topMesh = polygonToMesh([sidewalkInner], concreteMaterial);
+  scene.add(topMesh)
+
+  // close the polygon
+  hole.push(hole[0])
+
+  const sideGeometry = new RowhouseGeometry(asVector2List(hole), holeHeight);
+  const sideMesh = new three.Mesh(sideGeometry, concreteMaterial);
+  sideMesh.translateY(-holeHeight);
+  scene.add(sideMesh);
 }
