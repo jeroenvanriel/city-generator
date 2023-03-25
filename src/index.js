@@ -1,12 +1,19 @@
 import * as three from 'three';
 import './style.css';
 
+import network from './networks/grid.net.xml';
+
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
 import Controls from './controls';
-import { build } from './build';
+import { build, loadBird, loadObjects, addBirds } from './build';
 
 import { EffectComposer, RenderPass, EffectPass, DepthOfFieldEffect } from 'postprocessing';
 
 import * as clipperLib from 'js-angusj-clipper/web';
+import { getBounds } from './network';
+import bird from './models/stork.glb';
+import { getBirdPositions } from './utils';
 
 async function mainAsync() {
 
@@ -39,6 +46,15 @@ const scene = new three.Scene();
 
 // main drawing
 build(scene, clipper)
+
+// load in bird
+var birdObj;
+birdObj = loadBird(scene, birdObj);
+
+console.log("model in index " + birdObj)
+
+const birdPosistions = getBirdPositions(getBounds(network.net, 10));
+const startPos = birdPosistions[0], endPos = birdPosistions[1];
 
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));

@@ -13,10 +13,14 @@ import block1 from './models/block1.glb';
 import block_grey from './models/block_grey.glb';
 import streetlamp from './models/street_lamp.glb';
 import tree from './models/tree1.glb';
+import bird from './models/stork.glb';
 
 import { roadMaterial, concreteMaterial, densityTexture } from './material';
 import { RowhouseGeometry } from './rowhouseGeometry.js';
 
+const BIRD = {
+  'bird': {url: bird, scale: 0.2}
+}
 
 const OBJECTS = {
   'block1': { url: block1, scale: 10 },
@@ -203,6 +207,27 @@ function placeStreetlamps(clipper, scene, road_polygon, streetlamp) {
       //lamp_light.position.add(new three.Vector3(point.x, model_height, point.y))
       scene.add(lamp);
     })
+}
+
+export function loadBird(scene, birdObj) {
+  loadObjects(BIRD).then(r => {
+    birdObj = addBirds(scene, getBounds(network.net, 10), r.bird);
+    console.log("model in loadBird " + birdObj);
+  });
+  return(birdObj);
+}
+
+function addBirds(scene, bounds, bird) {
+  const [left, bottom, right, top] = bounds;
+  const birdObj = bird.obj.scene.clone();
+  const height = 150;
+  const startarr = [right, height, bottom];
+  const endarr = [left, height, top];
+  birdObj.position.set(startarr[0], startarr[1], startarr[2]);
+  birdObj.rotation.y = Math.PI * 1.3;
+  scene.add(birdObj);
+  console.log("model in addBirds " + birdObj);
+  return birdObj;
 }
 
 function getPositionsAlongPolygon(clipper, polygon, offset=10, count=15) { 

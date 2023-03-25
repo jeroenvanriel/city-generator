@@ -321,3 +321,12 @@ function drawPolygon(points, params) {
   });
   if (params.markers) ['start', 'mid', 'end'].map(t => line.marker(t, marker))
 }
+
+export function getBirdPositions(bounds) {
+  const [left, bottom, right, top] = bounds;
+  const height = 150;
+  const startarr = [right, height, bottom];
+  const endarr = [left, height, top];
+
+  return [startarr, endarr];
+}
