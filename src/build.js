@@ -8,12 +8,13 @@ import { buildRowHouses } from './rowhouse.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE, polygonToShape, getRandomSubarray, sampleFromImage, asVector2List } from './utils';
 
-import network from './networks/real2.net.xml';
+import network from './networks/grid.net.xml';
 import block1 from './models/block1.glb';
 import block_grey from './models/block_grey.glb';
 import streetlamp from './models/street_lamp.glb';
 import tree from './models/tree1.glb';
 import bird from './models/stork.glb';
+import person from './models/stick_man.glb';
 
 import { roadMaterial, concreteMaterial, densityTexture } from './material';
 import { RowhouseGeometry } from './rowhouseGeometry.js';
@@ -27,6 +28,7 @@ const OBJECTS = {
   'block_grey': { url: block_grey, scale: 10 },
   'streetlamp': { url: streetlamp, scale: 0.015 },
   'tree': { url: tree, scale: 3.5 },
+  'person': {url: person, scale: 10.0}
 }
 
 export function build(scene, clipper) {
@@ -40,17 +42,22 @@ export function build(scene, clipper) {
     const holes = road_polygon.slice(1);
 
     const sidewalkWidth = 5;
+    const sidewalkMiddleLength = sidewalkWidth / 2;
     const businessHoles = getRandomSubarray(holes, 5);
 
     loadObjects(OBJECTS).then(r => {
       placeStreetlamps(clipper, scene, road_polygon, r.streetlamp);
 
+
       placeFromImage(scene, getBounds(network.net), densityTexture.image, r.tree)
 
       _.forEach(holes, hole => {
         const sidewalkInner = fromClipper(offsetPolygon(clipper, toClipper(hole), - sidewalkWidth * SCALE));
+        const sidewalkMiddle = fromClipper(offsetPolygon(clipper, toClipper(hole), - sidewalkMiddleLength * SCALE));
 
         drawHoleMesh(scene, hole, sidewalkInner);
+
+        placePeople(scene, sidewalkMiddle, r.person);
 
         if (businessHoles.includes(hole)) {
           placeGridBuildings(clipper, scene, sidewalkInner, r.block_grey);
@@ -283,4 +290,21 @@ function drawHoleMesh(scene, hole, sidewalkInner, holeHeight=1) {
   const sideMesh = new three.Mesh(sideGeometry, concreteMaterial);
   sideMesh.translateY(-holeHeight);
   scene.add(sideMesh);
+}
+
+function placePeople(scene, polygon, person) {
+  var amountOfPeople = getRandomInt(0, 5);
+  //const peopleMesh = new three.Group();
+
+  for(let i=0; i < amountOfPeople; i++) {
+    var personObj = person.obj.scene.clone();
+    var randomPolyPos = getRandomInt(0, polygon.length-1);
+    const randomPosOnSidewalk = polygon[randomPolyPos];
+    //console.log(randomPosOnSidewalk);
+    personObj.position.set(randomPosOnSidewalk[0],0,randomPosOnSidewalk[1]);
+    //console.log(personObj.position);
+    scene.add(personObj);
+    //console.log(personObj);
+  }
+  
 }
