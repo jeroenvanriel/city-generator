@@ -172,8 +172,9 @@ function separateHouse(p, q, offset=5, minStep=25) {
 function drawFence(scene, points, material, height=5, depth=0.5) {
   const n = points.length;
 
+  // extrude inwards (so we don't use `right`)
   const [left, right] = extrudeLine(points, depth / 2);
-  const polygon = [...left, ...right.reverse()];
+  const polygon = [...points, ...left.reverse()];
   polygon.push(polygon[0]); // close it
 
   // duplicate points and move up
