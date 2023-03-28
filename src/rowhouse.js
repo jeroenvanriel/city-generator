@@ -1,9 +1,10 @@
 import * as three from 'three';
 import { RowhouseGeometry } from './rowhouseGeometry';
 import { RowhouseRoofGeometry } from './rowhouseRoofGeometry.js';
-import { offsetPolygon, extrudeLine, toClipper, fromClipper, SCALE, getRandomInt, asVector2List } from './utils';
+import { offsetPolygon, extrudeLine, toClipper, fromClipper, SCALE, getRandomInt, asVector2List, drawSphere, distance, fromVector2toVector3List } from './utils';
 
-import { brickMaterial, roofMaterial } from './material.js';
+import { brickMaterial, red, roofMaterial, woodMaterial } from './material.js';
+import { PathPlaneGeometry } from './PathPlaneGeometry';
 
 export function buildRowHouses(scene, clipper, hole) {
   const houseOffset = 15;
@@ -18,6 +19,20 @@ export function buildRowHouses(scene, clipper, hole) {
     const houseEndDepth = 5;
 
     const basePolygon = extrudeLine(line, houseDepth, houseEndDepth);
+
+    const n = basePolygon.length;
+    const p = basePolygon.slice(0, n/2);
+    const q = basePolygon.slice(n/2, n).reverse();
+
+    // TODO: make this possible with a generalized extrudeLine procedure
+    const gardenLine = extrudeLine(q, 15).slice(n/2, n).reverse();
+
+    const [pPoints, qPoints] = separateHouse(q, gardenLine);
+
+    drawFence(scene, [qPoints[0], ...gardenLine.slice(1, gardenLine.length - 1), qPoints[qPoints.length - 1]], red);
+    for (const [p, q] of _.zip(pPoints, qPoints)) {
+      drawFence(scene, [p, q], red);
+    }
 
     buildHouse(scene, basePolygon, line);
   }
@@ -118,4 +133,62 @@ function buildHouse(scene, basePolygon, houseMidline) {
   const roofMesh = new three.Mesh(roofGeometry, roofMaterial);
   roofMesh.translateY(houseHeight);
   scene.add(roofMesh);
+}
+
+function separateHouse(p, q, offset=5, minStep=25) {
+  const n = p.length;
+
+  const pPoints = [];
+  const qPoints = [];
+
+  let v, w1, w2, startoffset, endoffset;
+  for (let i = 0; i < n - 1; i++) {
+    v = new three.Vector2().subVectors(p[i+1], p[i]).normalize();
+
+    w1 = new three.Vector2().subVectors(q[i], p[i]).dot(v);
+    w2 = new three.Vector2().subVectors(q[i+1], p[i+1]).dot(v);
+
+    startoffset = new three.Vector2().addScaledVector(v, Math.max(0, w1));
+    endoffset = new three.Vector2().addScaledVector(v, Math.min(0, w2));
+
+    const startp = new three.Vector2().addVectors(p[i], startoffset);
+    const endp = new three.Vector2().addVectors(p[i+1], endoffset)
+
+    startoffset = new three.Vector2().addScaledVector(v, Math.min(0, w1));
+    endoffset = new three.Vector2().addScaledVector(v, Math.max(0, w2));
+
+    const startq = new three.Vector2().addVectors(q[i], startoffset)
+    // const endq = new three.Vector2().addVectors(q[i+1], endoffset)
+
+    const length = distance(startp, endp);
+    const steps = Math.floor(length / minStep);
+    const step = (length - 2 * offset) / steps;
+
+    for (let j = 0; j <= steps; j++) {
+      pPoints.push(startp.clone().addScaledVector(v, offset + j * step));
+      qPoints.push(startq.clone().addScaledVector(v, offset + j * step));
+    }
+  }
+
+  return [pPoints, qPoints];
+}
+
+function drawFence(scene, points, material, height=5, depth=0.5) {
+  const n = points.length;
+
+  const polygon = extrudeLine(points, depth / 2);
+  polygon.push(polygon[0]); // close it
+
+  // duplicate points and move up
+  const upperPolygon = fromVector2toVector3List(polygon).map(p => 
+    new three.Vector3().copy(p).setY(p.y + height)
+  )
+
+  const geometry = new PathPlaneGeometry(fromVector2toVector3List(polygon), upperPolygon);
+  const mesh = new three.Mesh(geometry, material);
+  scene.add(mesh);
+
+  const topGeometry = new PathPlaneGeometry(upperPolygon.slice(0, n), upperPolygon.slice(n, 2*n).reverse())
+  const topMesh = new three.Mesh(topGeometry, material);
+  scene.add(topMesh);
 }

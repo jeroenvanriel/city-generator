@@ -262,6 +262,12 @@ export function asVector2List(polygon) {
   return polygon.map(p => new three.Vector2(p[0], p[1]));
 }
 
+/** May be regarded an idempotent operator. */
+export function fromVector2toVector3List(points) {
+  if (points[0].x && points[0].y && points[0].z) return points;
+  return points.map(p => new three.Vector3(p.x, 0, p.y));
+}
+
 export function distance(p, q) {
   if (! p.x) { p = new three.Vector2(p[0], p[1]); }
   if (! q.x) { q = new three.Vector2(q[0], q[1]); }
