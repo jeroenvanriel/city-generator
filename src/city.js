@@ -18,6 +18,8 @@ import door from './models/door.glb';
 import { roadMaterial, concreteMaterial, densityTexture } from './material';
 import { RowhouseGeometry } from './rowhouseGeometry.js';
 
+import Birds from './birds.js';
+
 const OBJECTS = {
   'block1': { url: block1, scale: 10 },
   'block_grey': { url: block_grey, scale: 10 },
