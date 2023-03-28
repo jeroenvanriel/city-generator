@@ -8,7 +8,7 @@ import { buildRowHouses } from './rowhouse.js';
 import { SCALE, toClipper, fromClipper, asVector2List, polygonToMesh, offsetPolygon, 
   polygonToShape, getRandomInt, getRandomSubarray, sampleFromImage,  loadObjects } from './utils';
 
-import network from './networks/real2.net.xml';
+import network from './networks/real1.net.xml';
 import block1 from './models/block1.glb';
 import block_grey from './models/block_grey.glb';
 import streetlamp from './models/street_lamp.glb';
@@ -50,7 +50,7 @@ export default class City {
 
     const sidewalkWidth = 5;
     const sidewalkMiddleLength = sidewalkWidth / 2;
-    const businessHoles = getRandomSubarray(holes, 5);
+    const businessHoles = getRandomSubarray(holes, 1);
 
     loadObjects(OBJECTS).then(r => {
       placeStreetlamps(clipper, scene, road_polygon, r.streetlamp);
