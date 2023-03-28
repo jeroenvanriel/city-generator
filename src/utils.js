@@ -194,7 +194,7 @@ export function intersectionLines(p1, p2, p3, p4) {
   const y = (p1.x * p2.y - p1.y * p2.x)*(p3.y - p4.y) - (p1.y - p2.y)*(p3.x*p4.y - p3.y*p4.x);
   const yd = (p1.x - p2.x)*(p3.y - p4.y) - (p1.y - p2.y)*(p3.x - p4.x);
 
-  // TODO: parallel/coincident check
+  // TODO: (almost) parallel/coincident check
 
   return new three.Vector2(x/xd, y/yd);
 }
