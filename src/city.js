@@ -8,7 +8,7 @@ import { buildRowHouses } from './rowhouse.js';
 import { SCALE, toClipper, fromClipper, asVector2List, polygonToMesh, offsetPolygon, 
   polygonToShape, getRandomInt, getRandomSubarray, sampleFromImage,  loadObjects } from './utils';
 
-import network from './networks/grid.net.xml';
+import network from './networks/real2.net.xml';
 import block1 from './models/block1.glb';
 import block_grey from './models/block_grey.glb';
 import streetlamp from './models/street_lamp.glb';
