@@ -1,5 +1,6 @@
 import * as three from 'three';
 import * as clipperLib from 'js-angusj-clipper/web';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 // clipper uses integer numbers, so we multiply
 export const SCALE = 1000;
@@ -95,6 +96,45 @@ export function getRandomSubarray(arr, size) {
         shuffled[i] = temp;
     }
     return shuffled.slice(0, size);
+}
+
+/** Load GLTF objects asynchronously. */
+export function loadObjects(objects) {
+  const loader = new GLTFLoader();
+
+  return new Promise((resolve, reject) => {
+
+    const promises = Object.entries(objects).map(([key, object]) =>
+      new Promise((resolve, reject) => {
+
+        // add the loaded mesh as property
+        loader.loadAsync(object.url).then(obj => {
+          object.obj = obj
+          resolve([key, object]);
+        }).catch(error => reject(error))
+
+      })); 
+
+    // wait for all objects to load
+    Promise.all(promises).then(loadedObjects => {
+      const bb = new three.Box3();
+
+      _.forEach(loadedObjects, ([key, object]) => {
+        const obj = object.obj.scene;
+        const s = object.scale;
+        obj.scale.set(s, s, s);
+
+        // compute bounding box dimensions
+        bb.setFromObject(obj);
+        object.model_width = bb.max.x - bb.min.x;
+        object.model_height = bb.max.y - bb.min.y;
+        object.model_depth = bb.max.z - bb.min.z;
+      })
+
+      resolve(Object.fromEntries(loadedObjects));
+    }).catch(error => reject(error));
+
+  })
 }
 
 /** Generate three.Shape from polygon, given as a list [outer, hole, hole, ..., hole].  */
@@ -320,13 +360,4 @@ function drawPolygon(points, params) {
     add.circle(5, 5).fill({ color: params.color }).stroke({ color: params.color });
   });
   if (params.markers) ['start', 'mid', 'end'].map(t => line.marker(t, marker))
-}
-
-export function getBirdPositions(bounds) {
-  const [left, bottom, right, top] = bounds;
-  const height = 150;
-  const startarr = [right, height, bottom];
-  const endarr = [left, height, top];
-
-  return [startarr, endarr];
 }

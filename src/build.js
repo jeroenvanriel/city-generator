@@ -5,36 +5,40 @@ import { addEnvironment } from './environment';
 import { grid } from './grid'
 import { buildRowHouses } from './rowhouse.js';
 
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { getRandomInt, polygonToMesh, offsetPolygon, toClipper, fromClipper, SCALE, polygonToShape, getRandomSubarray, sampleFromImage, asVector2List } from './utils';
+import { SCALE, toClipper, fromClipper, asVector2List, polygonToMesh, offsetPolygon, 
+  polygonToShape, getRandomInt, getRandomSubarray, sampleFromImage,  loadObjects } from './utils';
 
 import network from './networks/grid.net.xml';
 import block1 from './models/block1.glb';
 import block_grey from './models/block_grey.glb';
 import streetlamp from './models/street_lamp.glb';
 import tree from './models/tree1.glb';
-import bird from './models/stork.glb';
-import person from './models/stick_man.glb';
 
 import { roadMaterial, concreteMaterial, densityTexture } from './material';
 import { RowhouseGeometry } from './rowhouseGeometry.js';
-
-const BIRD = {
-  'bird': {url: bird, scale: 0.2}
-}
+import Birds from './birds.js';
 
 const OBJECTS = {
   'block1': { url: block1, scale: 10 },
   'block_grey': { url: block_grey, scale: 10 },
   'streetlamp': { url: streetlamp, scale: 0.015 },
   'tree': { url: tree, scale: 3.5 },
-  'person': {url: person, scale: 10.0}
 }
 
-export function build(scene, clipper) {
+export default class City {
+
+  constructor(scene, clipper) {
+    this.clipper = clipper;
+
+    this.build(scene, clipper);
+  }
+
+  build(scene, clipper) {
     const holeHeight = 1;
 
     addEnvironment(scene, network.net, holeHeight);
+
+    this.birds = new Birds(scene, getBounds(network.net));
 
     const [ road_polygon, side_line_polygons, between_line_polygons ] = loadNetwork(network.net, clipper)
     drawRoad(scene, road_polygon, side_line_polygons, between_line_polygons, holeHeight);
@@ -48,7 +52,6 @@ export function build(scene, clipper) {
     loadObjects(OBJECTS).then(r => {
       placeStreetlamps(clipper, scene, road_polygon, r.streetlamp);
 
-
       placeFromImage(scene, getBounds(network.net), densityTexture.image, r.tree)
 
       _.forEach(holes, hole => {
@@ -57,7 +60,7 @@ export function build(scene, clipper) {
 
         drawHoleMesh(scene, hole, sidewalkInner);
 
-        placePeople(scene, sidewalkMiddle, r.person);
+        placePeople(scene, sidewalkMiddle, r.tree);
 
         if (businessHoles.includes(hole)) {
           placeGridBuildings(clipper, scene, sidewalkInner, r.block_grey);
@@ -67,45 +70,13 @@ export function build(scene, clipper) {
         }
       })
     });
+  }
+
+  update() {
+    this.birds.update();
+  }
 }
 
-function loadObjects(objects) {
-  const loader = new GLTFLoader();
-
-  return new Promise((resolve, reject) => {
-
-    const promises = Object.entries(objects).map(([key, object]) =>
-      new Promise((resolve, reject) => {
-
-        // add the loaded mesh as property
-        loader.loadAsync(object.url).then(obj => {
-          object.obj = obj
-          resolve([key, object]);
-        }).catch(error => reject(error))
-
-      })); 
-
-    // wait for all objects to load
-    Promise.all(promises).then(loadedObjects => {
-      const bb = new three.Box3();
-
-      _.forEach(loadedObjects, ([key, object]) => {
-        const obj = object.obj.scene;
-        const s = object.scale;
-        obj.scale.set(s, s, s);
-
-        // compute bounding box dimensions
-        bb.setFromObject(obj);
-        object.model_width = bb.max.x - bb.min.x;
-        object.model_height = bb.max.y - bb.min.y;
-        object.model_depth = bb.max.z - bb.min.z;
-      })
-
-      resolve(Object.fromEntries(loadedObjects));
-    }).catch(error => reject(error));
-
-  })
-}
 
 function drawRoad(scene, road_polygon, side_line_polygons, between_line_polygons, roadDepth) {
     const road_mesh = polygonToMesh(road_polygon, roadMaterial);
@@ -216,27 +187,6 @@ function placeStreetlamps(clipper, scene, road_polygon, streetlamp) {
     })
 }
 
-export function loadBird(scene, birdObj) {
-  loadObjects(BIRD).then(r => {
-    birdObj = addBirds(scene, getBounds(network.net, 10), r.bird);
-    console.log("model in loadBird " + birdObj);
-  });
-  return(birdObj);
-}
-
-function addBirds(scene, bounds, bird) {
-  const [left, bottom, right, top] = bounds;
-  const birdObj = bird.obj.scene.clone();
-  const height = 150;
-  const startarr = [right, height, bottom];
-  const endarr = [left, height, top];
-  birdObj.position.set(startarr[0], startarr[1], startarr[2]);
-  birdObj.rotation.y = Math.PI * 1.3;
-  scene.add(birdObj);
-  console.log("model in addBirds " + birdObj);
-  return birdObj;
-}
-
 function getPositionsAlongPolygon(clipper, polygon, offset=10, count=15) { 
   let r = fromClipper(offsetPolygon(clipper, toClipper(polygon), -offset * SCALE));
 
@@ -293,18 +243,13 @@ function drawHoleMesh(scene, hole, sidewalkInner, holeHeight=1) {
 }
 
 function placePeople(scene, polygon, person) {
-  var amountOfPeople = getRandomInt(0, 5);
-  //const peopleMesh = new three.Group();
+  var count = getRandomInt(0, 5);
 
-  for(let i=0; i < amountOfPeople; i++) {
-    var personObj = person.obj.scene.clone();
+  for (let i = 0; i < count; i++) {
+    var obj = person.obj.scene.clone();
     var randomPolyPos = getRandomInt(0, polygon.length-1);
-    const randomPosOnSidewalk = polygon[randomPolyPos];
-    //console.log(randomPosOnSidewalk);
-    personObj.position.set(randomPosOnSidewalk[0],0,randomPosOnSidewalk[1]);
-    //console.log(personObj.position);
-    scene.add(personObj);
-    //console.log(personObj);
+    const pos = polygon[randomPolyPos];
+    obj.position.set(pos[0], 0, pos[1]);
+    scene.add(obj);
   }
-  
 }

@@ -6,7 +6,7 @@ import network from './networks/grid.net.xml';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 import Controls from './controls';
-import { build, loadBird, loadObjects, addBirds } from './build';
+import City, { build, loadBird, loadObjects, addBirds } from './build';
 
 import { EffectComposer, RenderPass, EffectPass, DepthOfFieldEffect } from 'postprocessing';
 
@@ -44,17 +44,8 @@ const controls = new Controls(camera, renderer.domElement);
 
 const scene = new three.Scene();
 
-// main drawing
-build(scene, clipper)
-
-// load in bird
-var birdObj;
-birdObj = loadBird(scene, birdObj);
-
-console.log("model in index " + birdObj)
-
-const birdPosistions = getBirdPositions(getBounds(network.net, 10));
-const startPos = birdPosistions[0], endPos = birdPosistions[1];
+// create a city
+const city = new City(scene, clipper);
 
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
@@ -72,6 +63,7 @@ composer.addPass(new EffectPass(
 
 function animate() {
   requestAnimationFrame(animate);
+  city.update()
   controls.update();
   composer.render();
 }
