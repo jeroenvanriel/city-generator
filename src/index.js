@@ -1,19 +1,12 @@
 import * as three from 'three';
 import './style.css';
 
-import network from './networks/grid.net.xml';
-
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-
 import Controls from './controls';
-import City, { build, loadBird, loadObjects, addBirds } from './build';
+import City from './city';
 
 import { EffectComposer, RenderPass, EffectPass, DepthOfFieldEffect } from 'postprocessing';
 
 import * as clipperLib from 'js-angusj-clipper/web';
-import { getBounds } from './network';
-import bird from './models/stork.glb';
-import { getBirdPositions } from './utils';
 
 async function mainAsync() {
 
