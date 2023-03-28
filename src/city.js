@@ -129,48 +129,6 @@ function placeGridBuildings(clipper, scene, hole, block) {
   scene.add(group);
 }
 
-function placeBuildings(road_polygon, block) {
-  const holes = road_polygon.slice(1);
-
-  // TODO: use GPU instancing
-  // We need some extra loading code, because the imported model is a three.Group()
-  // so we need an three.InstancedMesh for each three.Mesh() in the group (which might
-  // need to be found recursively).
-  // const building_count = holes.length * 15;
-  // const instancedMesh = new three.InstancedMesh(block.geometry, block.material, building_count);
-  // const dummyObject = new three.Object3D();
-
-  let points = [];
-  for (let i = 0; i < holes.length; i++) {
-    points.push(...getPositionsAlongPolygon(holes[i]));
-    points.push(...getPositionsAlongPolygon(holes[i], 25, 10));
-    points.push(...getPositionsAlongPolygon(holes[i], 35, 5));
-  }
-
-  const bb = new three.Box3();
-  bb.setFromObject(block);
-  const model_height = bb.max.y - bb.min.y;
-
-  _.forEach(points, point => {
-    const levels = getRandomInt(1, 6);
-    for (let l = 0; l < levels; l++) {
-      const cube = block.clone();
-      cube.position.add(new three.Vector3(point.x, l * model_height, point.y));
-      cube.position.add(new three.Vector3(0, model_height / 2, 0));
-      scene.add(cube);
-    }
-
-    // TODO: use GPU instancing
-    // dummyObject.position.x = p.x;
-    // dummyObject.position.z = p.y;
-    // dummyObject.scale.set(10, 10, 10);
-    // instancedMesh.setMatrixAt(i + j, dummyObject.matrix);
-  })
-
-  // TODO: use GPU instancing
-  // scene.add(instancedMesh);
-}
-
 function placeStreetlamps(clipper, scene, road_polygon, streetlamp) {
   const holes = road_polygon.slice(1);
   let points = [];
