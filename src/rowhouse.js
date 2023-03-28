@@ -6,7 +6,7 @@ import { offsetPolygon, extrudeLine, toClipper, fromClipper, SCALE, getRandomInt
 import { brickMaterial, red, roofMaterial, woodMaterial } from './material.js';
 import { PathPlaneGeometry } from './PathPlaneGeometry';
 
-export function buildRowHouses(scene, clipper, hole) {
+export function buildRowHouses(scene, clipper, r, hole) {
   const houseOffset = 15;
 
   // get row house segments (polylines)
@@ -19,18 +19,18 @@ export function buildRowHouses(scene, clipper, hole) {
     const houseEndDepth = 5;
 
     const [left, right] = extrudeLine(line, houseDepth, houseEndDepth);
+    const basePolygon = [...left, ...right.slice().reverse()];
+    buildHouse(scene, basePolygon, line);
 
     const gardenLine = extrudeLine(right, 15)[1];
+    const streetsidePoints = separateHouse(left, gardenLine)[0];
+    drawDoors(scene, r.door, streetsidePoints)
 
     const [pPoints, qPoints] = separateHouse(right, gardenLine);
-
     drawFence(scene, [qPoints[0], ...gardenLine.slice(1, gardenLine.length - 1), qPoints[qPoints.length - 1]], red);
     for (const [p, q] of _.zip(pPoints, qPoints)) {
       drawFence(scene, [p, q], red);
     }
-
-    const basePolygon = [...left, ...right.reverse()];
-    buildHouse(scene, basePolygon, line);
   }
 }
 
@@ -189,4 +189,24 @@ function drawFence(scene, points, material, height=5, depth=0.5) {
   const topGeometry = new PathPlaneGeometry(upperPolygon.slice(0, n), upperPolygon.slice(n, 2*n).reverse())
   const topMesh = new three.Mesh(topGeometry, material);
   scene.add(topMesh);
+}
+
+function drawDoors(scene, door, points) {
+  for (let i = 0; i < points.length - 1; i++) {
+    const p = points[i];
+    const q = points[i+1]
+    const v = new three.Vector2().subVectors(q, p);
+
+    const offset = v.length() / 2;
+    const angle = v.angle();
+    const pos = new three.Vector2().copy(p).addScaledVector(v.normalize(), offset);
+
+    const obj = door.obj.scene.clone();
+
+    obj.rotateY(Math.PI / 2 - angle);
+    obj.position.setX(pos.x);
+    obj.position.setZ(pos.y);
+
+    scene.add(obj);
+  }
 }

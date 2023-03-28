@@ -13,16 +13,17 @@ import block1 from './models/block1.glb';
 import block_grey from './models/block_grey.glb';
 import streetlamp from './models/street_lamp.glb';
 import tree from './models/tree1.glb';
+import door from './models/door.glb';
 
 import { roadMaterial, concreteMaterial, densityTexture } from './material';
 import { RowhouseGeometry } from './rowhouseGeometry.js';
-import Birds from './birds.js';
 
 const OBJECTS = {
   'block1': { url: block1, scale: 10 },
   'block_grey': { url: block_grey, scale: 10 },
   'streetlamp': { url: streetlamp, scale: 0.015 },
   'tree': { url: tree, scale: 3.5 },
+  'door': { url: door, scale: 2 },
 }
 
 export default class City {
@@ -66,7 +67,7 @@ export default class City {
           placeGridBuildings(clipper, scene, sidewalkInner, r.block_grey);
         }
         else {
-          buildRowHouses(scene, clipper, hole);
+          buildRowHouses(scene, clipper, r, hole);
         }
       })
     });
