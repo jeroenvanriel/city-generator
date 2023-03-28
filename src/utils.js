@@ -199,7 +199,7 @@ export function intersectionLines(p1, p2, p3, p4) {
   return new three.Vector2(x/xd, y/yd);
 }
 
-/** Takes list of three.Vector2 and outputs three.Shape. */
+/** Takes list of three.Vector2 and outputs two lists of aligned points. */
 export function extrudeLine(line, offset=5, endOffset=0) {
   line = asVector2List(line);
   const origin = new three.Vector2();
@@ -248,7 +248,7 @@ export function extrudeLine(line, offset=5, endOffset=0) {
   left.push(s1)
   right.push(s2)
 
-  return [...left, ...right.reverse()];
+  return [left, right];
 }
 
 export function asVector2(p) {

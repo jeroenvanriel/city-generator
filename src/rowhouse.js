@@ -18,22 +18,18 @@ export function buildRowHouses(scene, clipper, hole) {
     const houseDepth = getRandomInt(8, 10);
     const houseEndDepth = 5;
 
-    const basePolygon = extrudeLine(line, houseDepth, houseEndDepth);
+    const [left, right] = extrudeLine(line, houseDepth, houseEndDepth);
 
-    const n = basePolygon.length;
-    const p = basePolygon.slice(0, n/2);
-    const q = basePolygon.slice(n/2, n).reverse();
+    const gardenLine = extrudeLine(right, 15)[1];
 
-    // TODO: make this possible with a generalized extrudeLine procedure
-    const gardenLine = extrudeLine(q, 15).slice(n/2, n).reverse();
-
-    const [pPoints, qPoints] = separateHouse(q, gardenLine);
+    const [pPoints, qPoints] = separateHouse(right, gardenLine);
 
     drawFence(scene, [qPoints[0], ...gardenLine.slice(1, gardenLine.length - 1), qPoints[qPoints.length - 1]], red);
     for (const [p, q] of _.zip(pPoints, qPoints)) {
       drawFence(scene, [p, q], red);
     }
 
+    const basePolygon = [...left, ...right.reverse()];
     buildHouse(scene, basePolygon, line);
   }
 }
@@ -176,7 +172,8 @@ function separateHouse(p, q, offset=5, minStep=25) {
 function drawFence(scene, points, material, height=5, depth=0.5) {
   const n = points.length;
 
-  const polygon = extrudeLine(points, depth / 2);
+  const [left, right] = extrudeLine(points, depth / 2);
+  const polygon = [...left, ...right.reverse()];
   polygon.push(polygon[0]); // close it
 
   // duplicate points and move up
