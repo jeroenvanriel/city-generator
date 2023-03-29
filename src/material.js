@@ -77,8 +77,8 @@ export const roofMaterial = new three.MeshStandardMaterial({
 // wood
 
 import woodImage from './textures/wood.jpg';
-const woodTexture = loadRepeatedTexture(roofImage);
-woodTexture.repeat.set(0.025, 0.05);
+const woodTexture = loadRepeatedTexture(woodImage);
+woodTexture.repeat.set(0.3, 0.3);
 export const woodMaterial = new three.MeshStandardMaterial({
   map: woodTexture,
   metalness: 0.5,
