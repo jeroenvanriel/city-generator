@@ -200,6 +200,14 @@ export function intersectionLines(p1, p2, p3, p4, eps=0.001) {
   }
 }
 
+/** Get midpoint between points p and q. */
+export function midpoint(p, q) {
+  p = asVector2(p);
+  q = asVector2(q);
+
+  return new three.Vector2((p.x + q.x) / 2, (p.y + q.y) / 2);
+}
+
 /** Takes list of three.Vector2 and outputs two lists of aligned points. */
 export function extrudeLine(line, offset=5, endOffset=0) {
   line = asVector2List(line);
