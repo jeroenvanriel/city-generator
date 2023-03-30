@@ -16,21 +16,24 @@ export function buildRowHouses(scene, clipper, r, hole) {
 
   for (let segment of segments) {
     const houseDepth = getRandomInt(8, 10);
-    const houseEndDepth = 5;
     const margin = 15;
 
     segment = extendLine(segment, -margin);
 
     const [left, right] = extrudeLine(segment, houseDepth);
-    const houses = splitSegment(left, right, segment)
+    const houses = splitSegment(left, right, [0.25, 0.75]);
 
     for (const house of houses) {
-      const [polygon, midline] = house;
+      const left = house[0];
+      const midline = house[1]
+      const right = house[2];
+      const garden = house[3]
+
+      const polygon = [...left, ...right.reverse()];
       buildHouse(scene, polygon, midline);
     }
   }
 
-  // const gardenLine = extrudeLine(right, 15)[1];
   // const streetsidePoints = splitPolygon(left, gardenLine)[0];
   // drawDoors(scene, r.door, streetsidePoints);
 
@@ -122,39 +125,36 @@ function splitPolygon(p, q, offset=5, minStep=25) {
  * We assume that line extrusion was symmetric, because we obtain the midline points
  * at the cuts by taking the midpoint between r and s.
  */
-function splitSegment(p, q, m) {
+function splitSegment(p, q, midlines) {
   // obtain a list of splits for each edge
   const edgeSplits = splitPolygon(p, q);
 
-  // each house is represented as [polygon, midline]
+  // each house is represented as [line, ...midlines, line]
   let houses = [];
-  function addHouse(current) {
-    const [rs, midline, ss] = _.unzip(current);
-    const polygon = [...rs, ...ss.reverse()];
-    houses.push([polygon, midline]);
+
+  function cut(p, q) {
+    const ms = midlines.map(m => between(p, q, m))
+    return [p, ...ms, q];
   }
 
-  // list of triples (p, m, q)
+  // list of split points [p, ...midlinePoints, q]
   let current = [];
   for (let i = 0; i < edgeSplits.length; i++) {
     // add start of i'th edge
-    current.push([p[i], m[i], q[i]])
-    for (const [r, s] of edgeSplits[i]) {
-      // compute the midpoint between r and s
-      // to obtain the midline point
-      // const [r, s] = split;
-      const m = midpoint(r, s);
-      current.push([r, m, s]);
-      addHouse(current);
+    current.push(cut(p[i], q[i]))
 
-      // start again from current split
-      current = [[r, m, s]];
+    for (const [r, s] of edgeSplits[i]) {
+      current.push(cut(r, s));
+      houses.push(_.unzip(current));
+
+      // start again from current cut
+      current = [cut(r, s)];
     }
   }
 
   // add end of last edge
-  current.push([p[p.length - 1], m[m.length - 1], q[q.length - 1]]);
-  addHouse(current);
+  current.push(cut(p[p.length - 1], q[q.length - 1]));
+  houses.push(_.unzip(current));
 
   return houses;
 }

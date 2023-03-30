@@ -200,12 +200,16 @@ export function intersectionLines(p1, p2, p3, p4, eps=0.001) {
   }
 }
 
-/** Get midpoint between points p and q. */
-export function midpoint(p, q) {
+/** Get point between points p and q (default offset=0.5 is midpoint). */
+export function between(p, q, offset=0.5) {
   p = asVector2(p);
   q = asVector2(q);
 
-  return new three.Vector2((p.x + q.x) / 2, (p.y + q.y) / 2);
+  const v = new three.Vector2().subVectors(q, p);
+  const length = v.length();
+  v.normalize();
+
+  return p.clone().addScaledVector(v, offset * length);
 }
 
 /** Takes list of three.Vector2 and outputs two lists of aligned points. */
