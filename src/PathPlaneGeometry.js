@@ -23,7 +23,7 @@ class PathPlaneGeometry extends BufferGeometry {
 		// build geometry
 		this.setIndex( indices );
 		this.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
-		// this.setAttribute( 'uv', new Float32BufferAttribute( uvs, 2));
+		this.setAttribute( 'uv', new Float32BufferAttribute( uvs, 2));
 		this.computeVertexNormals();
 
 		function generateBufferData() {
@@ -48,34 +48,22 @@ class PathPlaneGeometry extends BufferGeometry {
 				indices.push( b, c, d );
 
                 // uvs
-                // TODO: check these
-				// const width = distance(p, q);
+				const width = distance(p, q);
+				const height1 = distance(p, r);
+				const height2 = distance(q, s);
 
-				// const v = new three.Vector2().subVectors(
-				// 	asVector2(p),
-				// 	asVector2(q)
-				// ).normalize();
+				const v = new three.Vector3().subVectors(p, q).normalize();
 
-				// const w1 = new three.Vector2().subVectors(
-				// 	asVector2(r),
-				// 	asVector2(p)
-				// );
-				// const w2 = new three.Vector2().subVectors(
-				// 	asVector2(s),
-				// 	asVector2(q)
-				// );
+				const w1 = new three.Vector3().subVectors(r, p);
+				const w2 = new three.Vector3().subVectors(s, q);
 
-				// const shear1 = v.dot(w1);
-				// const shear2 = -v.dot(w2)
+				const shear1 = v.dot(w1);
+				const shear2 = -v.dot(w2)
 
-				// v.rotateAround(origin, -Math.PI / 2);
-				// const depth = v.dot(w1); // should be the same also for w2
-				// const diagonal = Math.sqrt( height*height + depth*depth );
-
-				// uvs.push(shear1, 0);
-				// uvs.push(0, diagonal);
-				// uvs.push(shear1 + width + shear2, diagonal);
-				// uvs.push(shear1 + width, 0);
+				uvs.push(shear1, 0);
+				uvs.push(0, height1);
+				uvs.push(shear1 + width + shear2, height2);
+				uvs.push(shear1 + width, 0);
             }
         }
 	}
