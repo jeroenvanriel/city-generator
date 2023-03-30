@@ -23,6 +23,11 @@ Using a global grid, we compute for each building lot which grid cells are compl
 On these valid cells, we place a random stack of prebuild building block.
 These building blocks have been modelled in Blender.
 
+## Interface
+
+- [x] density image for tree placement
+- [ ] dat.gui interface (with toggles for layers)
+
 ## Miscellaneous
 
 - [x] fix network loading
