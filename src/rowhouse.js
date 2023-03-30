@@ -111,6 +111,19 @@ function cutSegments(segments) {
   return lines;
 }
 
+/** Extend the first and last edge of a line [p1, ..., pn]. */
+function extendLine(line, offset) {
+  let v, n = line.length;
+  line = asVector2List(line);
+  // begin
+  v = new three.Vector2().subVectors(line[0], line[1]).normalize();
+  line[0].addScaledVector(v, offset);
+  // end
+  v = new three.Vector2().subVectors(line[n - 1], line[n - 2]).normalize();
+  line[n - 1].addScaledVector(v, offset);
+  return line;
+}
+
 function buildHouse(scene, basePolygon, houseMidline) {
   basePolygon = asVector2List(basePolygon);
   houseMidline = asVector2List(houseMidline);
