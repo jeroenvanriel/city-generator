@@ -1,7 +1,7 @@
 import * as three from 'three';
 import { RowhouseGeometry } from './rowhouseGeometry';
 import { RowhouseRoofGeometry } from './rowhouseRoofGeometry.js';
-import { offsetPolygon, extrudeLine, toClipper, fromClipper, SCALE, getRandomInt, asVector2List, drawSphere, distance, fromVector2toVector3List } from './utils';
+import { offsetPolygon, extrudeLine, toClipper, fromClipper, SCALE, getRandomInt, asVector2List, distance, fromVector2toVector3List, cleanLine, polygonToMesh, midpoint } from './utils';
 
 import { brickMaterial, red, roofMaterial, woodMaterial } from './material.js';
 import { PathPlaneGeometry } from './PathPlaneGeometry';
@@ -11,32 +11,37 @@ export function buildRowHouses(scene, clipper, r, hole) {
 
   // get row house segments (polylines)
   const innerPolygon = fromClipper(offsetPolygon(clipper, toClipper(hole), - (houseOffset) * SCALE));
+  innerPolygon.push(innerPolygon[0]); // close it
   const segments = getSegments(innerPolygon);
-  const houseLines = cutSegments(segments)
 
-  for (const line of houseLines) {
+  for (let segment of segments) {
     const houseDepth = getRandomInt(8, 10);
     const houseEndDepth = 5;
+    const margin = 15;
 
-    const [left, right] = extrudeLine(line, houseDepth, houseEndDepth);
-    const basePolygon = [...left, ...right.slice().reverse()];
-    buildHouse(scene, basePolygon, line);
+    segment = extendLine(segment, -margin);
 
-    const gardenLine = extrudeLine(right, 15)[1];
-    const streetsidePoints = separateHouse(left, gardenLine)[0];
-    drawDoors(scene, r.door, streetsidePoints)
+    const [left, right] = extrudeLine(segment, houseDepth);
+    const houses = splitSegment(left, right, segment)
 
-    const [pPoints, qPoints] = separateHouse(right, gardenLine);
-    drawFence(scene, [qPoints[0], ...gardenLine.slice(1, gardenLine.length - 1), qPoints[qPoints.length - 1]], red);
-    for (const [p, q] of _.zip(pPoints, qPoints)) {
-      drawFence(scene, [p, q], red);
+    for (const house of houses) {
+      const [polygon, midline] = house;
+      buildHouse(scene, polygon, midline);
     }
   }
+
+  // const gardenLine = extrudeLine(right, 15)[1];
+  // const streetsidePoints = splitPolygon(left, gardenLine)[0];
+  // drawDoors(scene, r.door, streetsidePoints);
+
+  // const [leftGarden, rightGarden] = splitPolygon(right, gardenLine);
+  // drawFences(scene, leftGarden, rightGarden, woodMaterial);
 }
 
 /**
  * Get parts of a polygon with consecutively long enough,
  * larger than threshold, edges.
+ * TODO: Add option to set maximum number of edges (e.g. to obtain only edges).
  */
 function getSegments(row, threshold=5) {
   let segments = [];
@@ -66,49 +71,92 @@ function getSegments(row, threshold=5) {
   return segments;
 }
 
-function cutSegments(segments) {
-  const MAX_CUTS = 2;
-  const lines = [];
+/**
+ * Given an extruded line by two boundary lines [p1, ..., pn] and [q1, ..., qn],
+ * compute cross lines [(r1,s1), ..., (rm,sm)] for each edge that do not `span across corners`.
+ * TODO: Document this definition in the final report.
+ */
+function splitPolygon(p, q, offset=5, minStep=25) {
+  const n = p.length;
 
-  for (const segment of segments) {
-    let currentLine = [segment[0]];
+  const edges = [];
 
-    for (let i = 1; i < segment.length; i++) {
-      const cutsCount = getRandomInt(0, MAX_CUTS);
+  let v, w1, w2, startoffset, endoffset;
+  for (let i = 0; i < n - 1; i++) {
+    v = new three.Vector2().subVectors(p[i+1], p[i]).normalize();
 
-      if (cutsCount == 0) {
-        currentLine.push(segment[i]);
-        continue;
-      }
+    w1 = new three.Vector2().subVectors(q[i], p[i]).dot(v);
+    w2 = new three.Vector2().subVectors(q[i+1], p[i+1]).dot(v);
 
-      const line = new three.LineCurve(
-        new three.Vector2(segment[i-1][0], segment[i-1][1]),
-        new three.Vector2(segment[i][0], segment[i][1]),
-      );
-      const tangent = line.getTangent(0.5); // t does not matter for lines
-      // divisions = cuts + 1
-      const cuts = line.getSpacedPoints(cutsCount + 1).slice(1, cutsCount + 1);
+    startoffset = new three.Vector2().addScaledVector(v, Math.max(0, w1));
+    endoffset = new three.Vector2().addScaledVector(v, Math.min(0, w2));
 
-      for (const cut of cuts) {
-        // cut the line here
-        const p = cut.clone();
-        p.addScaledVector(tangent, -10);
-        currentLine.push([p.x, p.y]);
+    const startp = new three.Vector2().addVectors(p[i], startoffset);
+    const endp = new three.Vector2().addVectors(p[i+1], endoffset)
 
-        lines.push(currentLine);
+    startoffset = new three.Vector2().addScaledVector(v, Math.min(0, w1));
+    endoffset = new three.Vector2().addScaledVector(v, Math.max(0, w2));
 
-        currentLine = [[cut.x, cut.y]];
-      }
+    const startq = new three.Vector2().addVectors(q[i], startoffset)
+    // const endq = new three.Vector2().addVectors(q[i+1], endoffset)
 
-      currentLine.push(segment[i]);
+    // evenly spaced points
+    const length = distance(startp, endp) - 2 * offset;
+    const parts = Math.floor(length / minStep);
+    const step = length / parts;
+    const splits = [];
+    for (let j = 1; j <= parts - 1; j++) {
+      splits.push([
+        startp.clone().addScaledVector(v, offset + j * step),
+        startq.clone().addScaledVector(v, offset + j * step)
+      ]);
     }
 
-    if (currentLine.length >= 2) {
-      lines.push(currentLine);
+    edges.push(splits)
+  }
+
+  return edges;
+}
+
+/**
+ * We assume that line extrusion was symmetric, because we obtain the midline points
+ * at the cuts by taking the midpoint between r and s.
+ */
+function splitSegment(p, q, m) {
+  // obtain a list of splits for each edge
+  const edgeSplits = splitPolygon(p, q);
+
+  // each house is represented as [polygon, midline]
+  let houses = [];
+  function addHouse(current) {
+    const [rs, midline, ss] = _.unzip(current);
+    const polygon = [...rs, ...ss.reverse()];
+    houses.push([polygon, midline]);
+  }
+
+  // list of triples (p, m, q)
+  let current = [];
+  for (let i = 0; i < edgeSplits.length; i++) {
+    // add start of i'th edge
+    current.push([p[i], m[i], q[i]])
+    for (const [r, s] of edgeSplits[i]) {
+      // compute the midpoint between r and s
+      // to obtain the midline point
+      // const [r, s] = split;
+      const m = midpoint(r, s);
+      current.push([r, m, s]);
+      addHouse(current);
+
+      // start again from current split
+      current = [[r, m, s]];
     }
   }
 
-  return lines;
+  // add end of last edge
+  current.push([p[p.length - 1], m[m.length - 1], q[q.length - 1]]);
+  addHouse(current);
+
+  return houses;
 }
 
 /** Extend the first and last edge of a line [p1, ..., pn]. */
