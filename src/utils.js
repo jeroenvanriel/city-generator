@@ -187,16 +187,17 @@ export function drawSphere(scene, point, params) {
 }
 
 /** Robust calculation of intersection of lines p1-p2 and p3-p4. */
-export function intersectionLines(p1, p2, p3, p4) {
+export function intersectionLines(p1, p2, p3, p4, eps=0.001) {
   const x = (p1.x * p2.y - p1.y * p2.x)*(p3.x - p4.x) - (p1.x - p2.x)*(p3.x*p4.y - p3.y*p4.x);
-  const xd = (p1.x - p2.x)*(p3.y - p4.y) - (p1.y - p2.y)*(p3.x - p4.x);
 
   const y = (p1.x * p2.y - p1.y * p2.x)*(p3.y - p4.y) - (p1.y - p2.y)*(p3.x*p4.y - p3.y*p4.x);
-  const yd = (p1.x - p2.x)*(p3.y - p4.y) - (p1.y - p2.y)*(p3.x - p4.x);
+  const d = (p1.x - p2.x)*(p3.y - p4.y) - (p1.y - p2.y)*(p3.x - p4.x);
 
-  // TODO: (almost) parallel/coincident check
-
-  return new three.Vector2(x/xd, y/yd);
+  if (d < eps) {
+    return false;
+  } else {
+    return new three.Vector2(x/d, y/d);
+  }
 }
 
 /** Takes list of three.Vector2 and outputs two lists of aligned points. */
@@ -249,6 +250,21 @@ export function extrudeLine(line, offset=5, endOffset=0) {
   right.push(s2)
 
   return [left, right];
+}
+
+/** Remove almost colinear points. */
+export function cleanLine(line) {
+  const points = [line[0]];
+
+  for (let i = 0; i < line.length - 2; i++) {
+    if (intersectionLines(line[i], line[i+1], line[i+1], line[i+2])) {
+      points.push(line[i+1])
+    }
+  }
+
+  points.push(line[line.length - 1]);
+
+  return points;
 }
 
 export function asVector2(p) {
