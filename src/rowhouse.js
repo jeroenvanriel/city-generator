@@ -131,11 +131,16 @@ function buildHouse(scene, basePolygon, houseMidline) {
   scene.add(roofMesh);
 }
 
+/**
+ * Given an extruded line by two boundary lines [p1, ..., pn] and [q1, ..., qn],
+ * compute cross lines [(r1,s1), ..., (rm,sm)] that do not `span across corners`.
+ * TODO: Document this definition in the final report.
+ */
 function separateHouse(p, q, offset=5, minStep=25) {
   const n = p.length;
 
-  const pPoints = [];
-  const qPoints = [];
+  const r = [];
+  const s = [];
 
   let v, w1, w2, startoffset, endoffset;
   for (let i = 0; i < n - 1; i++) {
@@ -156,17 +161,17 @@ function separateHouse(p, q, offset=5, minStep=25) {
     const startq = new three.Vector2().addVectors(q[i], startoffset)
     // const endq = new three.Vector2().addVectors(q[i+1], endoffset)
 
+    // evenly spaced points
     const length = distance(startp, endp);
     const steps = Math.floor(length / minStep);
     const step = (length - 2 * offset) / steps;
-
     for (let j = 0; j <= steps; j++) {
-      pPoints.push(startp.clone().addScaledVector(v, offset + j * step));
-      qPoints.push(startq.clone().addScaledVector(v, offset + j * step));
+      r.push(startp.clone().addScaledVector(v, offset + j * step));
+      s.push(startq.clone().addScaledVector(v, offset + j * step));
     }
   }
 
-  return [pPoints, qPoints];
+  return [r, s];
 }
 
 function drawFence(scene, points, material, height=5, depth=0.5) {
