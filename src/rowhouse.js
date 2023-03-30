@@ -55,7 +55,7 @@ function getSegments(row, threshold=5) {
       if (currentSegment.length >= 2) {
         segments.push(currentSegment);
       }
-      currentSegment = [];
+      currentSegment = [row[i]];
     }
   }
   // also add the last consecutive segment
