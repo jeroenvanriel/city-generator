@@ -34,19 +34,22 @@ export function buildRowHouses(scene, clipper, r, hole) {
   }
 }
 
-function getSegments(row) {
-  const THRESHOLD = 5;
-
+/**
+ * Get parts of a polygon with consecutively long enough,
+ * larger than threshold, edges.
+ */
+function getSegments(row, threshold=5) {
   let segments = [];
   // current consecutive
   let currentSegment = [row[0]];
   for (let i = 1; i < row.length; i++) {
 
+    // distance to previous point
     const dist = new three.Vector2(row[i][0], row[i][1]).distanceTo(
       new three.Vector2(row[i - 1][0], row[i - 1][1])
     )
 
-    if (dist > THRESHOLD) {
+    if (dist > threshold) {
       currentSegment.push(row[i])
     } else {
       if (currentSegment.length >= 2) {
