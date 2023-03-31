@@ -42,11 +42,11 @@ export function buildRowHouses(scene, clipper, r, hole) {
 }
 
 /**
- * Get parts of a polygon with consecutively long enough,
- * larger than threshold, edges.
- * TODO: Add option to set maximum number of edges (e.g. to obtain only edges).
+ * Get parts of a polygon with consecutively long enough, larger than
+ * threshold, edges. The maximum number of edges parameter may for
+ * example be used to obtain only single edges.
  */
-function getSegments(row, threshold=5) {
+function getSegments(row, threshold=5, maxEdges=1) {
   let segments = [];
   // current consecutive
   let currentSegment = [row[0]];
@@ -59,7 +59,9 @@ function getSegments(row, threshold=5) {
 
     if (dist > threshold) {
       currentSegment.push(row[i])
-    } else {
+    }
+
+    if (dist <= threshold || currentSegment.length > maxEdges) {
       if (currentSegment.length >= 2) {
         segments.push(currentSegment);
       }
