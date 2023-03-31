@@ -1,13 +1,15 @@
 import * as three from 'three';
 import { RowhouseGeometry } from './rowhouseGeometry';
 import { RowhouseRoofGeometry } from './rowhouseRoofGeometry.js';
-import { offsetPolygon, extrudeLine, toClipper, fromClipper, SCALE, getRandomInt, asVector2List, distance, fromVector2toVector3List, cleanLine, polygonToMesh, midpoint } from './utils';
+import { offsetPolygon, extrudeLine, toClipper, fromClipper, SCALE, getRandomInt, asVector2List, distance, fromVector2toVector3List, cleanLine, between } from './utils';
 
 import { brickMaterial, red, roofMaterial, woodMaterial } from './material.js';
 import { PathPlaneGeometry } from './PathPlaneGeometry';
 
+import { mergeBufferGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+
 export function buildRowHouses(scene, clipper, r, hole) {
-  const houseOffset = 15;
+  const houseOffset = 25;
 
   // get row house segments (polylines)
   const innerPolygon = fromClipper(offsetPolygon(clipper, toClipper(hole), - (houseOffset) * SCALE));
@@ -16,29 +18,44 @@ export function buildRowHouses(scene, clipper, r, hole) {
 
   for (let segment of segments) {
     const houseDepth = getRandomInt(8, 10);
-    const margin = 15;
+    const gardenDepth = getRandomInt(10, 12);
+    const totalDepth = houseDepth + gardenDepth;
 
-    segment = extendLine(segment, -margin);
+    const segmentPadding = 15;
+    segment = extendLine(segment, -segmentPadding);
 
-    const [left, right] = extrudeLine(segment, houseDepth);
-    const houses = splitSegment(left, right, [0.25, 0.75]);
+    const [left, right] = extrudeLine(segment, houseDepth + gardenDepth);
+    const houses = splitSegment(left, right, [houseDepth / totalDepth / 2, houseDepth / totalDepth]);
+
+    let houseHeight = getRandomInt(8, 20);
+    let roofHeight = getRandomInt(4, 15);
 
     for (const house of houses) {
-      const left = house[0];
-      const midline = house[1]
-      const right = house[2];
-      const garden = house[3]
+      let padding = 0;
+      let roofPadding = 0;
+      const paddingRate = 0.4;
+      if (Math.random() < paddingRate) {
+        padding = getRandomInt(8, 10);
+        roofPadding = padding + 5;
+        // new house, so new sample
+        houseHeight = getRandomInt(8, 20);
+        roofHeight = getRandomInt(4, 15);
+      }
 
-      const polygon = [...left, ...right.reverse()];
-      buildHouse(scene, polygon, midline);
+      const left = extendLine(house[0], -padding);
+      const midline = extendLine(house[1], -roofPadding)
+      const right = extendLine(house[2], -padding);
+      const garden = extendLine(house[3], -padding);
+
+      const polygon = [...left, ...right.slice().reverse()];
+      buildHouse(scene, polygon, midline, houseHeight, roofHeight);
+
+      drawFences(scene, right, garden, woodMaterial);
     }
   }
 
   // const streetsidePoints = splitPolygon(left, gardenLine)[0];
   // drawDoors(scene, r.door, streetsidePoints);
-
-  // const [leftGarden, rightGarden] = splitPolygon(right, gardenLine);
-  // drawFences(scene, leftGarden, rightGarden, woodMaterial);
 }
 
 /**
@@ -164,17 +181,17 @@ function splitSegment(p, q, midlines) {
 /** Extend the first and last edge of a line [p1, ..., pn]. */
 function extendLine(line, offset) {
   let v, n = line.length;
-  line = asVector2List(line);
+  const out = asVector2List(line).map(p => p.clone());
   // begin
-  v = new three.Vector2().subVectors(line[0], line[1]).normalize();
-  line[0].addScaledVector(v, offset);
+  v = new three.Vector2().subVectors(out[0], out[1]).normalize();
+  out[0].addScaledVector(v, offset);
   // end
-  v = new three.Vector2().subVectors(line[n - 1], line[n - 2]).normalize();
-  line[n - 1].addScaledVector(v, offset);
-  return line;
+  v = new three.Vector2().subVectors(out[n-1], out[n-2]).normalize();
+  out[n-1].addScaledVector(v, offset);
+  return out;
 }
 
-function buildHouse(scene, basePolygon, houseMidline) {
+function buildHouse(scene, basePolygon, houseMidline, houseHeight, roofHeight) {
   basePolygon = asVector2List(basePolygon);
   houseMidline = asVector2List(houseMidline);
 
@@ -182,9 +199,6 @@ function buildHouse(scene, basePolygon, houseMidline) {
   if (!basePolygon.at(-1).equals(basePolygon[0])) {
     basePolygon.push(basePolygon[0]);
   }
-
-  const houseHeight = getRandomInt(8, 20);
-  const roofHeight = getRandomInt(4, 15);
 
   const geometry = new RowhouseGeometry(basePolygon, houseHeight);
   const mesh = new three.Mesh(geometry, brickMaterial);
@@ -197,69 +211,32 @@ function buildHouse(scene, basePolygon, houseMidline) {
   scene.add(roofMesh);
 }
 
-/**
- * Given an extruded line by two boundary lines [p1, ..., pn] and [q1, ..., qn],
- * compute cross lines [(r1,s1), ..., (rm,sm)] that do not `span across corners`.
- * TODO: Document this definition in the final report.
- */
-function separateHouse(p, q, offset=5, minStep=25) {
-  const n = p.length;
+function drawFences(scene, left, right, material, height=5, depth=0.5) {
+  function drawFence(points) {
+    points = cleanLine(points);
+    const n = points.length;
 
-  const r = [];
-  const s = [];
+    // extrude inwards (so we don't use `right`)
+    const [left, right] = extrudeLine(points, depth / 2);
+    const polygon = [...left, ...points.reverse()];
+    polygon.push(polygon[0]); // close it
 
-  let v, w1, w2, startoffset, endoffset;
-  for (let i = 0; i < n - 1; i++) {
-    v = new three.Vector2().subVectors(p[i+1], p[i]).normalize();
+    // duplicate points and move up
+    const upperPolygon = fromVector2toVector3List(polygon).map(p => 
+      new three.Vector3().copy(p).setY(p.y + height)
+    )
 
-    w1 = new three.Vector2().subVectors(q[i], p[i]).dot(v);
-    w2 = new three.Vector2().subVectors(q[i+1], p[i+1]).dot(v);
+    const sideGeometry = new PathPlaneGeometry(fromVector2toVector3List(polygon), upperPolygon);
+    const topGeometry = new PathPlaneGeometry(upperPolygon.slice(0, n), upperPolygon.slice(n, 2*n).reverse())
 
-    startoffset = new three.Vector2().addScaledVector(v, Math.max(0, w1));
-    endoffset = new three.Vector2().addScaledVector(v, Math.min(0, w2));
-
-    const startp = new three.Vector2().addVectors(p[i], startoffset);
-    const endp = new three.Vector2().addVectors(p[i+1], endoffset)
-
-    startoffset = new three.Vector2().addScaledVector(v, Math.min(0, w1));
-    endoffset = new three.Vector2().addScaledVector(v, Math.max(0, w2));
-
-    const startq = new three.Vector2().addVectors(q[i], startoffset)
-    // const endq = new three.Vector2().addVectors(q[i+1], endoffset)
-
-    // evenly spaced points
-    const length = distance(startp, endp);
-    const steps = Math.floor(length / minStep);
-    const step = (length - 2 * offset) / steps;
-    for (let j = 0; j <= steps; j++) {
-      r.push(startp.clone().addScaledVector(v, offset + j * step));
-      s.push(startq.clone().addScaledVector(v, offset + j * step));
-    }
+    scene.add(new three.Mesh(mergeBufferGeometries([sideGeometry, topGeometry]), material));
   }
 
-  return [r, s];
-}
-
-function drawFence(scene, points, material, height=5, depth=0.5) {
-  const n = points.length;
-
-  // extrude inwards (so we don't use `right`)
-  const [left, right] = extrudeLine(points, depth / 2);
-  const polygon = [...points, ...left.reverse()];
-  polygon.push(polygon[0]); // close it
-
-  // duplicate points and move up
-  const upperPolygon = fromVector2toVector3List(polygon).map(p => 
-    new three.Vector3().copy(p).setY(p.y + height)
-  )
-
-  const geometry = new PathPlaneGeometry(fromVector2toVector3List(polygon), upperPolygon);
-  const mesh = new three.Mesh(geometry, material);
-  scene.add(mesh);
-
-  const topGeometry = new PathPlaneGeometry(upperPolygon.slice(0, n), upperPolygon.slice(n, 2*n).reverse())
-  const topMesh = new three.Mesh(topGeometry, material);
-  scene.add(topMesh);
+  drawFence(left);
+  drawFence(right);
+  for (const [p, q] of _.zip(left, right)) {
+    drawFence([p, q]);
+  }
 }
 
 function drawDoors(scene, door, points) {
