@@ -51,11 +51,11 @@ export function buildRowHouses(scene, clipper, r, hole) {
       buildHouse(scene, polygon, midline, houseHeight, roofHeight);
 
       drawFences(scene, right, garden, woodMaterial);
+
+      drawDoors(scene, r.door, left);
     }
   }
 
-  // const streetsidePoints = splitPolygon(left, gardenLine)[0];
-  // drawDoors(scene, r.door, streetsidePoints);
 }
 
 /**
