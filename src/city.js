@@ -14,6 +14,7 @@ import block_grey from './models/block_grey.glb';
 import streetlamp from './models/street_lamp.glb';
 import tree from './models/tree1.glb';
 import door from './models/door.glb';
+import person from './models/pixel_person.glb';
 
 import { roadMaterial, concreteMaterial, densityTexture } from './material';
 import { RowhouseGeometry } from './rowhouseGeometry.js';
@@ -26,6 +27,7 @@ const OBJECTS = {
   'streetlamp': { url: streetlamp, scale: 0.015 },
   'tree': { url: tree, scale: 3.5 },
   'door': { url: door, scale: 2 },
+  'person': {url: person, scale: 0.3}
 }
 
 export default class City {
@@ -49,7 +51,7 @@ export default class City {
     const holes = road_polygon.slice(1);
 
     const sidewalkWidth = 5;
-    const sidewalkMiddleLength = sidewalkWidth / 2;
+    const sidewalkMiddleLength = (sidewalkWidth / 2) + 1;
     const businessHoles = getRandomSubarray(holes, 1);
 
     loadObjects(OBJECTS).then(r => {
@@ -63,7 +65,7 @@ export default class City {
 
         drawHoleMesh(scene, hole, sidewalkInner);
 
-        placePeople(scene, sidewalkMiddle, r.tree);
+        placePeople(scene, sidewalkMiddle, r.person);
 
         if (businessHoles.includes(hole)) {
           placeGridBuildings(clipper, scene, sidewalkInner, r.block_grey);
@@ -204,13 +206,15 @@ function drawHoleMesh(scene, hole, sidewalkInner, holeHeight=1) {
 }
 
 function placePeople(scene, polygon, person) {
-  var count = getRandomInt(0, 5);
+  var count = getRandomInt(0, 3);
 
   for (let i = 0; i < count; i++) {
     var obj = person.obj.scene.clone();
     var randomPolyPos = getRandomInt(0, polygon.length-1);
+    var randomRotation = getRandomInt(0, Math.PI*2);
     const pos = polygon[randomPolyPos];
     obj.position.set(pos[0], 0, pos[1]);
+    obj.rotation.set(0, randomRotation, 0);
     scene.add(obj);
   }
 }
