@@ -53,6 +53,8 @@ export function buildRowHouses(scene, clipper, r, hole) {
       drawFences(scene, right, garden, woodMaterial);
 
       drawDoors(scene, r.door, left);
+
+      drawWindow(scene, r.small_window, r.big_window, left, houseHeight);
     }
   }
 
@@ -242,7 +244,7 @@ function drawFences(scene, left, right, material, height=5, depth=0.5) {
 function drawDoors(scene, door, points) {
   for (let i = 0; i < points.length - 1; i++) {
     const p = points[i];
-    const q = points[i+1]
+    const q = points[i+1];
     const v = new three.Vector2().subVectors(q, p);
 
     const offset = v.length() / 2;
@@ -256,5 +258,88 @@ function drawDoors(scene, door, points) {
     obj.position.setZ(pos.y);
 
     scene.add(obj);
+  }
+}
+
+function drawWindow(scene, small_window, big_window, points, houseHeight) {
+
+  const houseHeightHalf = (houseHeight / 2);
+  //threshold to determine if house is high enough for 2 levels of windows
+  const houseHeightThreshold = 15;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const p = points[i]; //first x point of house
+    const q = points[i+1]; //second x point of house
+    const v = new three.Vector2().subVectors(q, p); //groundline x of house
+
+    //amount of windows in the second level
+    const windowAmountTop = Math.ceil(v.length() / 14);
+    // distance between windows
+    const windowDistTop = v.length() / windowAmountTop;
+
+    const angle = v.angle();
+
+    //windows one level above the door if house is high enough
+    if (houseHeight > houseHeightThreshold) {
+      for (let j = 0; j < windowAmountTop; j++) {
+
+        //need to redo this otherwise v stays normalised in following iterations
+        const v = new three.Vector2().subVectors(q, p); 
+
+        //small chance window does not show for variation
+        const windowRandTop = getRandomInt(0, 10);
+        if (windowRandTop < 9) {
+        
+          //Here (windowDistTop / 3) otherwise windows start outside of houseborder
+          const offset = v.length() - (j*windowDistTop) - (windowDistTop / 3);
+          const pos = new three.Vector2().copy(p).addScaledVector(v.normalize(), offset);
+
+          const objTop = small_window.obj.scene.clone();
+
+          objTop.rotateY(Math.PI / 2 - angle);
+          objTop.position.setX(pos.x);
+          objTop.position.setZ(pos.y);
+          objTop.position.setY(houseHeightHalf + 0.5);
+          
+          scene.add(objTop);
+        }
+      }
+    }
+
+    //Windows on the same level as the door
+    const windowAmountBottom = Math.floor((v.length() / 2) / 14);
+    
+    if (windowAmountBottom > 0) { 
+      const windowDistBottom = v.length() / windowAmountBottom;
+    
+      //Here we look at the left side of the door and the right side of the door separately such that they don't overlap with the door 
+      for (let k = 0; k < windowAmountBottom; k++) {
+
+        //need to redo this otherwise v stays normalised in following iterations
+        const v = new three.Vector2().subVectors(q, p); 
+
+        //Here (windowDistBottom / 7) otherwise windows start outside of houseborder
+        const offsetFirst = v.length() - (k*(windowDistBottom / 2.5)) - (windowDistBottom / 7);
+        const offsetSecond = v.length() - (v.length()/2) - (k*(windowDistBottom / 2.5)) - (windowDistBottom / 7);
+        const posFirst = new three.Vector2().copy(p).addScaledVector(v.normalize(), offsetFirst);
+        const posSecond = new three.Vector2().copy(p).addScaledVector(v.normalize(), offsetSecond);
+
+        const objBottomFirst = big_window.obj.scene.clone();
+        const objBottomSecond = big_window.obj.scene.clone();
+
+        objBottomFirst.rotateY(Math.PI / 2 - angle);
+        objBottomFirst.position.setX(posFirst.x);
+        objBottomFirst.position.setZ(posFirst.y);
+        objBottomFirst.position.setY(houseHeightHalf / 4);
+
+        objBottomSecond.rotateY(Math.PI / 2 - angle);
+        objBottomSecond.position.setX(posSecond.x);
+        objBottomSecond.position.setZ(posSecond.y);
+        objBottomSecond.position.setY(houseHeightHalf / 4);
+          
+        scene.add(objBottomFirst);
+        scene.add(objBottomSecond);
+      }
+    }
   }
 }

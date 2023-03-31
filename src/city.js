@@ -15,6 +15,8 @@ import streetlamp from './models/street_lamp.glb';
 import tree from './models/tree1.glb';
 import door from './models/door.glb';
 import person from './models/pixel_person.glb';
+import small_window from './models/small_window.glb';
+import big_window from './models/big_window.glb';
 
 import { roadMaterial, concreteMaterial, densityTexture } from './material';
 import { RowhouseGeometry } from './rowhouseGeometry.js';
@@ -27,7 +29,9 @@ const OBJECTS = {
   'streetlamp': { url: streetlamp, scale: 0.015 },
   'tree': { url: tree, scale: 3.5 },
   'door': { url: door, scale: 2 },
-  'person': {url: person, scale: 0.3}
+  'person': {url: person, scale: 0.3},
+  'small_window': {url: small_window, scale: 0.1},
+  'big_window': {url: big_window, scale: 0.1},
 }
 
 export default class City {
