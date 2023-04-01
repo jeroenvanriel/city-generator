@@ -52,9 +52,11 @@ export function buildRowHouses(scene, clipper, r, hole) {
 
       drawFences(scene, right, garden, woodMaterial);
 
-      drawDoors(scene, r.door, left);
+      drawDoors(scene, r.door, left, right);
 
-      drawWindow(scene, r.small_window, r.big_window, left, houseHeight);
+      drawFrontWindows(scene, r.small_window, r.big_window, left, houseHeight);
+
+      drawBackWindows(scene, r.small_window, r.big_window, right, houseHeight);
     }
   }
 
@@ -241,10 +243,10 @@ function drawFences(scene, left, right, material, height=5, depth=0.5) {
   }
 }
 
-function drawDoors(scene, door, points) {
-  for (let i = 0; i < points.length - 1; i++) {
-    const p = points[i];
-    const q = points[i+1];
+function drawDoors(scene, door, left, right) {
+  for (let i = 0; i < left.length - 1; i++) {
+    const p = left[i];
+    const q = left[i+1];
     const v = new three.Vector2().subVectors(q, p);
 
     const offset = v.length() / 2;
@@ -259,9 +261,27 @@ function drawDoors(scene, door, points) {
 
     scene.add(obj);
   }
+
+  for (let j = 0; j < right.length - 1; j++) {
+    const p = right[j];
+    const q = right[j+1];
+    const v = new three.Vector2().subVectors(q, p);
+
+    const offset = v.length() / 2;
+    const angle = v.angle();
+    const pos = new three.Vector2().copy(p).addScaledVector(v.normalize(), offset);
+
+    const objBack = door.obj.scene.clone();
+
+    objBack.rotateY(Math.PI / 2 - angle);
+    objBack.position.setX(pos.x);
+    objBack.position.setZ(pos.y);
+
+    scene.add(objBack);
+  }
 }
 
-function drawWindow(scene, small_window, big_window, points, houseHeight) {
+function drawFrontWindows(scene, small_window, big_window, points, houseHeight) {
 
   const houseHeightHalf = (houseHeight / 2);
   //threshold to determine if house is high enough for 2 levels of windows
@@ -341,5 +361,52 @@ function drawWindow(scene, small_window, big_window, points, houseHeight) {
         scene.add(objBottomSecond);
       }
     }
+  }
+}
+
+function drawBackWindows(scene, small_window, big_window, points, houseHeight) {
+
+  const houseHeightHalf = (houseHeight / 2);
+  //threshold to determine if house is high enough for 2 levels of windows
+  const houseHeightThreshold = 15;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const p = points[i]; //first x point of house
+    const q = points[i+1]; //second x point of house
+    const v = new three.Vector2().subVectors(q, p); //groundline x of house
+
+    //amount of windows in the second level
+    const windowAmountTop = Math.ceil(v.length() / 14);
+    // distance between windows
+    const windowDistTop = v.length() / windowAmountTop;
+
+    const angle = v.angle();
+
+    //windows one level above the door if house is high enough
+    if (houseHeight > houseHeightThreshold) {
+      for (let j = 0; j < windowAmountTop; j++) {
+
+        //need to redo this otherwise v stays normalised in following iterations
+        const v = new three.Vector2().subVectors(q, p); 
+
+        //small chance window does not show for variation
+        const windowRandTop = getRandomInt(0, 10);
+        if (windowRandTop < 9) {
+        
+          //Here (windowDistTop / 3) otherwise windows start outside of houseborder
+          const offset = v.length() - (j*windowDistTop) - (windowDistTop / 3);
+          const pos = new three.Vector2().copy(p).addScaledVector(v.normalize(), offset);
+
+          const objTop = small_window.obj.scene.clone();
+
+          objTop.rotateY(Math.PI / 2 - angle);
+          objTop.position.setX(pos.x);
+          objTop.position.setZ(pos.y);
+          objTop.position.setY(houseHeightHalf + 0.5);
+          
+          scene.add(objTop);
+        }
+      }
+    }    
   }
 }
