@@ -264,6 +264,43 @@ export function extrudeLine(line, offset=5, endOffset=0) {
   return [left, right];
 }
 
+/**
+ * Get parts of a polygon with consecutively long enough, larger than
+ * threshold, edges. The maximum number of edges parameter may for
+ * example be used to obtain only single edges.
+ */
+export function getSegments(polygon, threshold=5, maxEdges=1) {
+  const points = asVector2List(polygon);
+
+  let segments = [];
+  // current consecutive
+  let currentSegment = [points[0]];
+  for (let i = 1; i < points.length; i++) {
+
+    // distance to previous point
+    const dist = new three.Vector2(points[i].x, points[i].y).distanceTo(
+      new three.Vector2(points[i - 1].x, points[i - 1].y)
+    )
+
+    if (dist > threshold) {
+      currentSegment.push(points[i])
+    }
+
+    if (dist <= threshold || currentSegment.length > maxEdges) {
+      if (currentSegment.length >= 2) {
+        segments.push(currentSegment);
+      }
+      currentSegment = [points[i]];
+    }
+  }
+  // also add the last consecutive segment
+  if (currentSegment.length >= 2) {
+    segments.push(currentSegment)
+  }
+
+  return segments;
+}
+
 /** Remove almost colinear points. */
 export function cleanLine(line) {
   const points = [line[0]];

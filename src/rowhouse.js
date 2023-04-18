@@ -1,7 +1,7 @@
 import * as three from 'three';
 import { RowhouseGeometry } from './rowhouseGeometry';
 import { RowhouseRoofGeometry } from './rowhouseRoofGeometry.js';
-import { offsetPolygon, extrudeLine, toClipper, fromClipper, SCALE, getRandomInt, asVector2List, distance, fromVector2toVector3List, cleanLine, between } from './utils';
+import { offsetPolygon, extrudeLine, toClipper, fromClipper, SCALE, getRandomInt, asVector2List, distance, fromVector2toVector3List, cleanLine, between, getSegments } from './utils';
 
 import { brickMaterial, red, roofMaterial, woodMaterial } from './material.js';
 import { PathPlaneGeometry } from './PathPlaneGeometry';
@@ -60,43 +60,6 @@ export function buildRowHouses(scene, clipper, r, hole) {
     }
   }
 
-}
-
-/**
- * Get parts of a polygon with consecutively long enough, larger than
- * threshold, edges. The maximum number of edges parameter may for
- * example be used to obtain only single edges.
- */
-export function getSegments(polygon, threshold=5, maxEdges=1) {
-  const points = asVector2List(polygon);
-
-  let segments = [];
-  // current consecutive
-  let currentSegment = [points[0]];
-  for (let i = 1; i < points.length; i++) {
-
-    // distance to previous point
-    const dist = new three.Vector2(points[i].x, points[i].y).distanceTo(
-      new three.Vector2(points[i - 1].x, points[i - 1].y)
-    )
-
-    if (dist > threshold) {
-      currentSegment.push(points[i])
-    }
-
-    if (dist <= threshold || currentSegment.length > maxEdges) {
-      if (currentSegment.length >= 2) {
-        segments.push(currentSegment);
-      }
-      currentSegment = [points[i]];
-    }
-  }
-  // also add the last consecutive segment
-  if (currentSegment.length >= 2) {
-    segments.push(currentSegment)
-  }
-
-  return segments;
 }
 
 /**
