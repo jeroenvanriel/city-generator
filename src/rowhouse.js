@@ -67,26 +67,28 @@ export function buildRowHouses(scene, clipper, r, hole) {
  * threshold, edges. The maximum number of edges parameter may for
  * example be used to obtain only single edges.
  */
-function getSegments(row, threshold=5, maxEdges=1) {
+export function getSegments(polygon, threshold=5, maxEdges=1) {
+  const points = asVector2List(polygon);
+
   let segments = [];
   // current consecutive
-  let currentSegment = [row[0]];
-  for (let i = 1; i < row.length; i++) {
+  let currentSegment = [points[0]];
+  for (let i = 1; i < points.length; i++) {
 
     // distance to previous point
-    const dist = new three.Vector2(row[i][0], row[i][1]).distanceTo(
-      new three.Vector2(row[i - 1][0], row[i - 1][1])
+    const dist = new three.Vector2(points[i].x, points[i].y).distanceTo(
+      new three.Vector2(points[i - 1].x, points[i - 1].y)
     )
 
     if (dist > threshold) {
-      currentSegment.push(row[i])
+      currentSegment.push(points[i])
     }
 
     if (dist <= threshold || currentSegment.length > maxEdges) {
       if (currentSegment.length >= 2) {
         segments.push(currentSegment);
       }
-      currentSegment = [row[i]];
+      currentSegment = [points[i]];
     }
   }
   // also add the last consecutive segment
