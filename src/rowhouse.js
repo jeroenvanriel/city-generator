@@ -102,7 +102,6 @@ export function getSegments(polygon, threshold=5, maxEdges=1) {
 /**
  * Given an extruded line by two boundary lines [p1, ..., pn] and [q1, ..., qn],
  * compute cross lines [(r1,s1), ..., (rm,sm)] for each edge that do not `span across corners`.
- * TODO: Document this definition in the final report.
  */
 function splitPolygon(p, q, offset=5, minStep=25) {
   const n = p.length;
