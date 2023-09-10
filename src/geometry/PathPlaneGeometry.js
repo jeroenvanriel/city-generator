@@ -1,6 +1,6 @@
 import * as three from 'three';
 import { BufferGeometry, Float32BufferAttribute } from 'three';
-import { distance } from './utils';
+import { distance } from '../utils';
 
 class PathPlaneGeometry extends BufferGeometry {
 

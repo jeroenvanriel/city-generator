@@ -4,7 +4,6 @@ import { loadNetwork, getBounds } from './network.js';
 import { addEnvironment } from './environment';
 import { grid } from './grid'
 import { buildRowHouses } from './rowhouse.js';
-import { voronoiDivision } from './voronoiLots.js';
 
 import { SCALE, toClipper, fromClipper, asVector2List, polygonToMesh, offsetPolygon, 
   polygonToShape, getRandomInt, getRandomSubarray, sampleFromImage,  loadObjects } from './utils';
@@ -20,7 +19,7 @@ import small_window from './models/small_window.glb';
 import big_window from './models/big_window.glb';
 
 import { roadMaterial, concreteMaterial, densityTexture } from './material';
-import { RowhouseGeometry } from './rowhouseGeometry.js';
+import { RowhouseGeometry } from './geometry/RowhouseGeometry.js';
 
 import Birds from './birds.js';
 import { buildVoronoiRowhouses } from './voronoiRowhouse.js';

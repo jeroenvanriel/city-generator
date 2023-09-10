@@ -19,7 +19,6 @@ class StraightSkeletonRoofGeometry extends BufferGeometry {
         this.setIndex( indices );
         this.setAttribute('position', new Float32BufferAttribute(vertices, 3 ));
 
-        // TODO: compute uvs
         //this.setAttribute('uv', new Float32BufferAttribute(uvs, 2));
         //this.computeVertexNormals();
 
@@ -37,11 +36,18 @@ class StraightSkeletonRoofGeometry extends BufferGeometry {
                 flat3 = flat3.map(([x,y,z]) => [x,z,y]).flat();
                 vertices.push(...flat3);
 
-                // triangulate the flat polygons to obtain indices
                 const flat2 = polygon.map((point) => result.vertices[point].slice(0, 2)).flat();
+                // triangulate the flat polygons to obtain indices
                 let triangulated = earcut(flat2);
-                triangulated.reverse();
+                triangulated.reverse();  // apparently, this yields the right orientation
                 indices.push(...triangulated.map((index) => index_counter + index))
+
+                // TODO: compute uvs assuming each polygon is planar, we should
+                // Project all points on this plane to compute the corresponding
+                // uvs.
+                // 1. compute plane from first 3 points
+                // 2. determine left-bottom point
+                // 3. compute uvs relative to this origin
 
                 index_counter += flat3.length / 3;
             }

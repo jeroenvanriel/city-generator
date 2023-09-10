@@ -1,13 +1,12 @@
 import * as three from 'three';
-import { RowhouseGeometry } from './rowhouseGeometry';
-import { RowhouseRoofGeometry } from './rowhouseRoofGeometry.js';
+import { RowhouseGeometry } from './geometry/RowhouseGeometry';
 import { offsetPolygon, extrudeLine, toClipper, fromClipper, SCALE, getRandomInt, asVector2List, distance, fromVector2toVector3List, cleanLine, between, getSegments } from './utils';
 
 import { brickMaterial, red, roofMaterial, woodMaterial } from './material.js';
-import { PathPlaneGeometry } from './PathPlaneGeometry';
+import { PathPlaneGeometry } from './geometry/PathPlaneGeometry';
 
 import { mergeBufferGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { StraightSkeletonRoofGeometry } from './straightSkeletonRoofGeometry';
+import { StraightSkeletonRoofGeometry } from './geometry/StraightSkeletonRoofGeometry';
 
 export function buildRowHouses(scene, clipper, r, hole) {
   const houseOffset = 25;
