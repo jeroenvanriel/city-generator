@@ -6,17 +6,17 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 export const SCALE = 1000;
 
 export function toClipper(points) {
-  return _.map(points, (point) => ({
-    x: Math.round(SCALE * point[0]),
-    y: Math.round(SCALE * point[1]),
+  return _.map(asVector2List(points), (point) => ({
+    x: Math.round(SCALE * point.x),
+    y: Math.round(SCALE * point.y),
   }));
 }
 
 export function fromClipper(points) {
-  return _.map(points, (point) => [
+  return _.map(points, (point) => new three.Vector2(
     point.x / SCALE,
     point.y / SCALE,
-  ]);
+  ));
 }
 
 /** Generate a random integer between min and max. */
@@ -372,20 +372,20 @@ export function offsetPolygon(clipper, polygon, delta=2) {
   })?.getFirst()?.contour;
 }
 
-export function intersection(clipper, poly1, poly2) {
-  const in1 = { data: poly1, closed: true };
-  const in2 = { data: poly2, closed: true };
+export function intersection(clipper, poly1, poly2, closed1=true, closed2=true) {
+  const in1 = { data: poly1, closed: closed1 };
+  const in2 = { data: poly2, closed: closed2 };
   return clipper.clipToPaths({
     clipType: clipperLib.ClipType.Intersection,
     subjectInputs: [in1],
     clipInputs: [in2],
-    subjectFillType: clipperLib.PolyFillType.Positive
+    subjectFillType: clipperLib.PolyFillType.NonZero
   });
 }
 
-export function difference(clipper, poly1, poly2) {
-  const in1 = { data: poly1, closed: true };
-  const in2 = { data: poly2, closed: true };
+export function difference(clipper, poly1, poly2, closed1=true, closed2=true) {
+  const in1 = { data: poly1, closed: closed1 };
+  const in2 = { data: poly2, closed: closed2 };
   return clipper.clipToPaths({
     clipType: clipperLib.ClipType.Difference,
     subjectInputs: [in1],

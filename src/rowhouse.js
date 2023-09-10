@@ -7,6 +7,7 @@ import { brickMaterial, red, roofMaterial, woodMaterial } from './material.js';
 import { PathPlaneGeometry } from './PathPlaneGeometry';
 
 import { mergeBufferGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { StraightSkeletonRoofGeometry } from './straightSkeletonRoofGeometry';
 
 export function buildRowHouses(scene, clipper, r, hole) {
   const houseOffset = 25;
@@ -159,9 +160,8 @@ function extendLine(line, offset) {
   return out;
 }
 
-function buildHouse(scene, basePolygon, houseMidline, houseHeight, roofHeight) {
+export function buildHouse(scene, basePolygon, houseHeight, roofHeight) {
   basePolygon = asVector2List(basePolygon);
-  houseMidline = asVector2List(houseMidline);
 
   // close the polygon if necessary
   if (!basePolygon.at(-1).equals(basePolygon[0])) {
@@ -173,7 +173,7 @@ function buildHouse(scene, basePolygon, houseMidline, houseHeight, roofHeight) {
   mesh.castShadow = true;
   scene.add( mesh );
 
-  const roofGeometry = new RowhouseRoofGeometry(basePolygon, houseMidline, roofHeight);
+  const roofGeometry = new StraightSkeletonRoofGeometry(basePolygon, roofHeight);
   const roofMesh = new three.Mesh(roofGeometry, roofMaterial);
   roofMesh.translateY(houseHeight);
   scene.add(roofMesh);

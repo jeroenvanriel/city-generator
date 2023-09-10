@@ -8,6 +8,10 @@ import { EffectComposer, RenderPass, EffectPass, DepthOfFieldEffect } from 'post
 
 import * as clipperLib from 'js-angusj-clipper/web';
 
+import {SkeletonBuilder} from 'straight-skeleton';
+// Initialize the Wasm module by calling init() once.
+await SkeletonBuilder.init();
+
 async function mainAsync() {
 
 const clipper = await clipperLib.loadNativeClipperLibInstanceAsync(

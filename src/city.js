@@ -4,6 +4,7 @@ import { loadNetwork, getBounds } from './network.js';
 import { addEnvironment } from './environment';
 import { grid } from './grid'
 import { buildRowHouses } from './rowhouse.js';
+import { voronoiDivision } from './voronoiLots.js';
 
 import { SCALE, toClipper, fromClipper, asVector2List, polygonToMesh, offsetPolygon, 
   polygonToShape, getRandomInt, getRandomSubarray, sampleFromImage,  loadObjects } from './utils';
@@ -22,6 +23,7 @@ import { roadMaterial, concreteMaterial, densityTexture } from './material';
 import { RowhouseGeometry } from './rowhouseGeometry.js';
 
 import Birds from './birds.js';
+import { buildVoronoiRowhouses } from './voronoiRowhouse.js';
 
 const OBJECTS = {
   'block1': { url: block1, scale: 10 },
@@ -70,6 +72,8 @@ export default class City {
         drawHoleMesh(scene, hole, sidewalkInner);
 
         placePeople(scene, sidewalkMiddle, r.person);
+
+        buildVoronoiRowhouses(scene, clipper, asVector2List(sidewalkInner));
 
         if (businessHoles.includes(hole)) {
           placeGridBuildings(clipper, scene, sidewalkInner, r.block_grey);

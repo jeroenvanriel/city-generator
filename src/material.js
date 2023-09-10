@@ -13,6 +13,21 @@ export const red = new three.MeshStandardMaterial({ color: 'red', side: three.Do
 export const green = new three.MeshStandardMaterial({ color: 'green', side: three.DoubleSide });
 export const blue = new three.MeshStandardMaterial({ color: 'blue', side: three.DoubleSide });
 
+export function getGradient(n=10, color1='red', color2='blue') {
+  color1 = new three.Color(color1);
+  color2 = new three.Color(color2);
+
+  const materials = [];
+  for (let i = 0; i < n; i++) {
+    const color = new three.Color().lerpColors(
+      color1, color2, i / (n-1)
+    )
+    materials.push(new three.MeshStandardMaterial({ color, side: three.DoubleSide }));
+  }
+
+  return materials;
+}
+
 // asphalt
 
 import asphaltImage from './textures/asphalt.png';
