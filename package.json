@@ -20,10 +20,13 @@
   },
   "dependencies": {
     "@svgdotjs/svg.js": "^3.1.2",
+    "earcut": "^2.2.4",
     "js-angusj-clipper": "^1.3.1",
     "lodash": "^4.17.21",
     "postprocessing": "^6.30.1",
+    "straight-skeleton": "^2.0.1",
     "three": "^0.139.2",
+    "voronoi": "^1.0.0",
     "xml-loader": "^1.2.1"
   }
 }
