@@ -2,11 +2,10 @@ import * as three from 'three';
 import { BufferGeometry, Float32BufferAttribute } from 'three';
 import { asVector2, distance } from './utils';
 
-class RowhouseRoofGeometry extends BufferGeometry {
+class MidlineRoofGeometry extends BufferGeometry {
 
     constructor(polygon, midline, height) {
         super();
-
 
         this.type = 'RowhouseRoofGeometry';
 
@@ -104,4 +103,4 @@ class RowhouseRoofGeometry extends BufferGeometry {
 
 }
 
-export { RowhouseRoofGeometry };
+export { MidlineRoofGeometry as RowhouseRoofGeometry };
