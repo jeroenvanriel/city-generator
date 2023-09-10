@@ -1,8 +1,7 @@
 import * as three from 'three';
 import Voronoi from 'voronoi';
 
-import { getSegments, offsetPolygon, asVector2List, between, distance, drawSphere, intersection, difference, polygonToMesh, toClipper, fromClipper, SCALE, randomUniform } from './utils';
-import { getGradient } from './material';
+import { getSegments, offsetPolygon, asVector2List, between, distance, intersection, difference, toClipper, fromClipper, SCALE, randomUniform } from './utils';
 import { buildHouse } from "./rowhouse";
 
 export function buildVoronoiRowhouses(scene, clipper, face) {
