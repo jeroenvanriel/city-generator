@@ -29,12 +29,7 @@ export function buildVoronoiRowhouses(scene, clipper, face) {
 
 }
 
-/**
- * Subdivides a network face in lots using a Voronoi division.
- *
- * The current implementation is only demonstrating the idea by drawing
- * the lots.
- */
+/** Subdivides a network face in lots using a Voronoi division. */
 function voronoiDivision(scene, clipper, face, innerPolygon) {
 
     innerPolygon.push(innerPolygon[0]);
@@ -61,10 +56,6 @@ function voronoiDivision(scene, clipper, face, innerPolygon) {
 
     const points_copy = points.slice();
 
-    for (const point of points) {
-        drawSphere(scene, point, { color: 'black' });
-    }
-
     // compute Voronoi diagram
     let voronoi = new Voronoi();
 
@@ -83,9 +74,8 @@ function voronoiDivision(scene, clipper, face, innerPolygon) {
 
     const polys = [];
 
-    // draw lots
+    // compute lots by intersecting with bouding polygon
     let i = 0;
-    const materials = getGradient(30, 'red', 'green');
     for (const cell of diagram.cells) {
         const cellPolygon = cell.halfedges.map(edge => edge.getStartpoint());
         cellPolygon.push(cell.halfedges.at(-1).getEndpoint());
@@ -95,8 +85,6 @@ function voronoiDivision(scene, clipper, face, innerPolygon) {
         // clipped voronoi cell
         polys.push(clipped_poly);
 
-        const material = materials[i];
-        scene.add(polygonToMesh([clipped_poly], material))
         i++;
     }
 
