@@ -48,7 +48,7 @@ export default class City {
 
     addEnvironment(scene, network.net, holeHeight);
 
-    this.birds = new Birds(scene, getBounds(network.net));
+    //this.birds = new Birds(scene, getBounds(network.net));
 
     const [ road_polygon, side_line_polygons, between_line_polygons ] = loadNetwork(network.net, clipper)
     drawRoad(scene, road_polygon, side_line_polygons, between_line_polygons, holeHeight);
@@ -75,17 +75,17 @@ export default class City {
         buildVoronoiRowhouses(scene, clipper, asVector2List(sidewalkInner));
 
         if (businessHoles.includes(hole)) {
-          placeGridBuildings(clipper, scene, sidewalkInner, r.block_grey);
+          //placeGridBuildings(clipper, scene, sidewalkInner, r.block_grey);
         }
         else {
-          buildRowHouses(scene, clipper, r, hole);
+          //buildRowHouses(scene, clipper, r, hole);
         }
       })
     });
   }
 
   update() {
-    this.birds.update();
+    //this.birds.update();
   }
 }
 
