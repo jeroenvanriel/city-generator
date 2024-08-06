@@ -1,4 +1,5 @@
 import * as three from 'three';
+import { clipper } from './clipper.js';
 
 import { loadNetwork, getBounds } from './network.js';
 import { addEnvironment } from './environment';
@@ -37,14 +38,14 @@ const OBJECTS = {
 
 export default class City {
 
-  constructor(scene, clipper) {
+  constructor(scene) {
     const holeHeight = 1;
 
     addEnvironment(scene, network.net, holeHeight);
 
     //this.birds = new Birds(scene, getBounds(network.net));
 
-    const [ road_polygon, side_line_polygons, between_line_polygons ] = loadNetwork(network.net, clipper)
+    const [ road_polygon, side_line_polygons, between_line_polygons ] = loadNetwork(network.net)
     drawRoad(scene, road_polygon, side_line_polygons, between_line_polygons, holeHeight);
     
     const holes = road_polygon.slice(1);
@@ -54,25 +55,25 @@ export default class City {
     const businessHoles = getRandomSubarray(holes, 1);
 
     loadObjects(OBJECTS).then(r => {
-      placeStreetlamps(clipper, scene, road_polygon, r.streetlamp);
+      placeStreetlamps(scene, road_polygon, r.streetlamp);
 
       placeFromImage(scene, getBounds(network.net), densityTexture.image, r.tree)
 
       _.forEach(holes, hole => {
-        const sidewalkInner = fromClipper(offsetPolygon(clipper, toClipper(hole), - sidewalkWidth * SCALE));
-        const sidewalkMiddle = fromClipper(offsetPolygon(clipper, toClipper(hole), - sidewalkMiddleLength * SCALE));
+        const sidewalkInner = fromClipper(offsetPolygon(toClipper(hole), - sidewalkWidth * SCALE));
+        const sidewalkMiddle = fromClipper(offsetPolygon(toClipper(hole), - sidewalkMiddleLength * SCALE));
 
         drawHoleMesh(scene, hole, sidewalkInner);
 
         placePeople(scene, sidewalkMiddle, r.person);
 
-        buildVoronoiRowhouses(scene, clipper, asVector2List(sidewalkInner));
+        buildVoronoiRowhouses(scene, asVector2List(sidewalkInner));
 
         if (businessHoles.includes(hole)) {
-          //placeGridBuildings(clipper, scene, sidewalkInner, r.block_grey);
+          //placeGridBuildings(scene, sidewalkInner, r.block_grey);
         }
         else {
-          //buildRowHouses(scene, clipper, r, hole);
+          //buildRowHouses(scene, r, hole);
         }
       })
     });
@@ -104,8 +105,8 @@ function drawRoad(scene, road_polygon, side_line_polygons, between_line_polygons
     });
 }
 
-function placeGridBuildings(clipper, scene, hole, block) {
-  const cells = grid(clipper, hole, block.model_width, block.model_depth);
+function placeGridBuildings(scene, hole, block) {
+  const cells = grid(hole, block.model_width, block.model_depth);
 
   const group = new three.Group;
   for (let x = 0; x < cells.length; x++) {
@@ -135,11 +136,11 @@ function placeGridBuildings(clipper, scene, hole, block) {
   scene.add(group);
 }
 
-function placeStreetlamps(clipper, scene, road_polygon, streetlamp) {
+function placeStreetlamps(scene, road_polygon, streetlamp) {
   const holes = road_polygon.slice(1);
   let points = [];
   for (let i = 0; i < holes.length; i++) {
-    points.push(...getPositionsAlongPolygon(clipper, holes[i], 2, 12));
+    points.push(...getPositionsAlongPolygon(holes[i], 2, 12));
   }
 
   _.forEach(points, point => {
@@ -151,8 +152,8 @@ function placeStreetlamps(clipper, scene, road_polygon, streetlamp) {
     })
 }
 
-function getPositionsAlongPolygon(clipper, polygon, offset=10, count=15) { 
-  let r = fromClipper(offsetPolygon(clipper, toClipper(polygon), -offset * SCALE));
+function getPositionsAlongPolygon(polygon, offset=10, count=15) { 
+  let r = fromClipper(offsetPolygon(toClipper(polygon), -offset * SCALE));
 
   // close the polygon
   r.push(r[0]);

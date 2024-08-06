@@ -1,4 +1,5 @@
 import * as three from 'three';
+import { clipper } from './clipper.js';
 import './style.css';
 
 import Controls from './controls';
@@ -6,17 +7,12 @@ import City from './city';
 
 import { EffectComposer, RenderPass, EffectPass, DepthOfFieldEffect } from 'postprocessing';
 
-import * as clipperLib from 'js-angusj-clipper/web';
 
 import {SkeletonBuilder} from 'straight-skeleton';
 // Initialize the Wasm module by calling init() once.
 await SkeletonBuilder.init();
 
 async function mainAsync() {
-
-const clipper = await clipperLib.loadNativeClipperLibInstanceAsync(
-  clipperLib.NativeClipperLibRequestedFormat.WasmWithAsmJsFallback
-);
 
 const renderer = new three.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -42,7 +38,7 @@ const controls = new Controls(camera, renderer.domElement);
 const scene = new three.Scene();
 
 // create a city
-const city = new City(scene, clipper);
+const city = new City(scene);
 
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));

@@ -1,4 +1,5 @@
 import * as three from 'three';
+import { clipper } from './clipper.js';
 import * as clipperLib from 'js-angusj-clipper/web';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
@@ -341,7 +342,7 @@ export function distance(p, q) {
   return Math.sqrt( xdif*xdif +  ydif*ydif );
 }
 
-export function union(clipper, polygons) {
+export function union(polygons) {
   const inputs = _.map(polygons, (polygon) => ({ data: polygon, closed: true }));
   return clipper.clipToPaths({
     clipType: clipperLib.ClipType.Union,
@@ -350,7 +351,7 @@ export function union(clipper, polygons) {
   });
 }
 
-export function extrudePolyline(clipper, line, delta=2) {
+export function extrudePolyline(line, delta=2) {
   return clipper.offsetToPaths({
     delta: delta,
     offsetInputs: [{
@@ -361,7 +362,7 @@ export function extrudePolyline(clipper, line, delta=2) {
   })[0];
 }
 
-export function offsetPolygon(clipper, polygon, delta=2) {
+export function offsetPolygon(polygon, delta=2) {
   return clipper.offsetToPolyTree({
     delta: delta,
     offsetInputs: [{
@@ -372,7 +373,7 @@ export function offsetPolygon(clipper, polygon, delta=2) {
   })?.getFirst()?.contour;
 }
 
-export function intersection(clipper, poly1, poly2, closed1=true, closed2=true) {
+export function intersection(poly1, poly2, closed1=true, closed2=true) {
   const in1 = { data: poly1, closed: closed1 };
   const in2 = { data: poly2, closed: closed2 };
   return clipper.clipToPaths({
@@ -383,7 +384,7 @@ export function intersection(clipper, poly1, poly2, closed1=true, closed2=true) 
   });
 }
 
-export function difference(clipper, poly1, poly2, closed1=true, closed2=true) {
+export function difference(poly1, poly2, closed1=true, closed2=true) {
   const in1 = { data: poly1, closed: closed1 };
   const in2 = { data: poly2, closed: closed2 };
   return clipper.clipToPaths({

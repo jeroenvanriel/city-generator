@@ -8,11 +8,11 @@ import { PathPlaneGeometry } from './geometry/PathPlaneGeometry';
 import { mergeBufferGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { StraightSkeletonRoofGeometry } from './geometry/StraightSkeletonRoofGeometry';
 
-export function buildRowHouses(scene, clipper, r, hole) {
+export function buildRowHouses(scene, r, hole) {
   const houseOffset = 25;
 
   // get row house segments (polylines)
-  const innerPolygon = fromClipper(offsetPolygon(clipper, toClipper(hole), - (houseOffset) * SCALE));
+  const innerPolygon = fromClipper(offsetPolygon(toClipper(hole), - (houseOffset) * SCALE));
   innerPolygon.push(innerPolygon[0]); // close it
   const segments = getSegments(innerPolygon);
 

@@ -1,7 +1,7 @@
 import * as three from 'three';
 import { difference, toClipper } from './utils';
 
-export function grid(clipper, polygon, gridLength, gridWidth) {
+export function grid(polygon, gridLength, gridWidth) {
     // compute bounding box of the polygon
     const bb = new three.Box2();
     bb.setFromPoints(polygon.map(p => new three.Vector2(p[0], p[1])));
@@ -30,7 +30,7 @@ export function grid(clipper, polygon, gridLength, gridWidth) {
 
             // compute intersection between grid cell and polygon
             // we only need to check if the result is empty
-            const res = difference(clipper, toClipper(gridCellPoly), toClipper(polygon))
+            const res = difference(toClipper(gridCellPoly), toClipper(polygon))
             grid[i].push(res.length == 0 ? gridCellPoly : null);
         }
     }
