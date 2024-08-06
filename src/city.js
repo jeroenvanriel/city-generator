@@ -38,12 +38,6 @@ const OBJECTS = {
 export default class City {
 
   constructor(scene, clipper) {
-    this.clipper = clipper;
-
-    this.build(scene, clipper);
-  }
-
-  build(scene, clipper) {
     const holeHeight = 1;
 
     addEnvironment(scene, network.net, holeHeight);
