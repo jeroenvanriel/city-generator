@@ -1,5 +1,5 @@
 import * as three from 'three';
-import { clipper } from './clipper.js';
+import { clipper } from './clipper.js'; // to trigger loading the library
 import './style.css';
 
 import Controls from './controls';
